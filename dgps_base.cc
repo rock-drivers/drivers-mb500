@@ -62,9 +62,9 @@ static const int AVERAGING_SAMPLING = 1;
 int main (int argc, const char** argv){
     DGPS gps;
 
-    if (argc != 4 && argc != 5)
+    if (argc != 4 && argc != 5 && argc != 8)
     {
-        cerr << "usage: dgps_test device_name port target_host target_port" << endl;
+        cerr << "usage: dgps_test device_name port target_host target_port [lattitude longitude altitude]" << endl;
         return 1;
     }
 
@@ -100,60 +100,73 @@ int main (int argc, const char** argv){
     if(!gps.openBase(device_name))
         return 1;
 
-    if (!gps.setReceiverDynamics(DGPS::STATIC))
+    if (!gps.setReceiverDynamics(gps::STATIC))
     {
         cerr << "could not set the receiver dynamics" << endl;
         return 1;
     }
 
+
     gps.setPeriodicData(current_port, AVERAGING_SAMPLING);
     cerr << "DGPS board initialized" << endl;
     DGPS::displayHeader(cerr);
+    base::Time last_update, first_solution;
 
-    DFKI::Time last_update, first_solution;
-
-    size_t count = 0;
-    double pos[3] = { 0, 0, 0 };
-    while(true)
-    {
-        gps.collectPeriodicData();
-        if (gps.position.timestamp == gps.errors.timestamp && (gps.position.timestamp > last_update || last_update == DFKI::Time()))
-        {
-	    if (gps.position.positionType != gps::NO_SOLUTION && gps.position.positionType != gps::INVALID)
+    if(argc == 8) {
+	double pos[3] = { 0, 0, 0 };
+	pos[0] = boost::lexical_cast<double>(argv[5]);
+	pos[1] = boost::lexical_cast<double>(argv[6]);
+	pos[2] = boost::lexical_cast<double>(argv[7]);
+	cerr << "setting position to: lat=" << pos[0] << ", long=" << pos[1] << ", alt=" << pos[2] << endl;
+	gps.setPosition(pos[0], pos[1], pos[2]);	
+	gps.collectPeriodicData();
+	cerr << "board reports position : lat=" << gps.position.latitude << ", long=" << gps.position.longitude << ", alt=" << gps.position.altitude << endl;
+	DGPS::display(cout, gps);
+	
+    } else {
+	size_t count = 0;
+	double pos[3] = { 0, 0, 0 };
+	while(true)
+	{
+	    gps.collectPeriodicData();
+	    if (gps.position.time == gps.errors.time && (gps.position.time > last_update || last_update == base::Time()))
 	    {
-                if (first_solution.isNull())
-                {
-                    first_solution = gps.position.timestamp;
-                    cerr << "first solution found, now waiting " << AVERAGING_TIME << " seconds." << endl;
-                }
-                pos[0] += gps.position.latitude;
-                pos[1] += gps.position.longitude;
-                pos[2] += gps.position.altitude;
-                ++count;
+		if (gps.position.positionType != gps::NO_SOLUTION && gps.position.positionType != gps::INVALID)
+		{
+		    if (first_solution.isNull())
+		    {
+			first_solution = gps.position.time;
+			cerr << "first solution found, now waiting " << AVERAGING_TIME << " seconds." << endl;
+		    }
+		    pos[0] += gps.position.latitude;
+		    pos[1] += gps.position.longitude;
+		    pos[2] += gps.position.altitude;
+		    ++count;
+		}
+
+		last_update = gps.position.time;
+		DGPS::display(cerr, gps) << endl;
 	    }
 
-            last_update = gps.position.timestamp;
-            DGPS::display(cerr, gps) << endl;
-        }
-
-	if (!first_solution.isNull() && (gps.position.timestamp - first_solution) > DFKI::Time(AVERAGING_TIME))
-	{
-	    cerr << "now setting base station position" << endl;
-	    break;
+	    if (!first_solution.isNull() && (gps.position.time - first_solution) > base::Time(AVERAGING_TIME))
+	    {
+		cerr << "now setting base station position" << endl;
+		break;
+	    }
 	}
-    }
 
-    gps.stopPeriodicData();
-    pos[0] /= count; pos[1] /= count; pos[2] /= count;
-    cerr << "setting fixed position to current position." << endl;
-    //cerr << "setting position to: lat=" << pos[0] << ", long=" << pos[1] << ", alt=" << pos[2] << endl;
-    //gps.setPosition(pos[0], pos[1], pos[2]);
-    gps.setPositionFromCurrent();
+	gps.stopPeriodicData();
+	pos[0] /= count; pos[1] /= count; pos[2] /= count;
+	cerr << "setting fixed position to current position." << endl;
+	//cerr << "setting position to: lat=" << pos[0] << ", long=" << pos[1] << ", alt=" << pos[2] << endl;
+	//gps.setPosition(pos[0], pos[1], pos[2]);
+	gps.setPositionFromCurrent();
+    }
     gps.setRTKBase(current_port);
     char buffer[1024];
 
-    last_update = DFKI::Time::now();
-    DFKI::Time start = DFKI::Time::now();
+    last_update = base::Time::now();
+    base::Time start = base::Time::now();
     int bytes_tx = 0;
     while(true)
     {
@@ -177,7 +190,7 @@ int main (int argc, const char** argv){
 	    }
 
 	    bytes_tx += rd;
-	    DFKI::Time now = DFKI::Time::now();
+	    base::Time now = base::Time::now();
 	    float duration = (now - last_update).toSeconds();
 	    if (duration > 1)
 	    {

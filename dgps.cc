@@ -87,8 +87,8 @@ bool DGPS::setUserDynamics(int h_vel, int h_acc, int v_vec, int v_acc)
 	    boost::lexical_cast<string>(h_vel) + "," +
 	    boost::lexical_cast<string>(h_acc) + "," +
 	    boost::lexical_cast<string>(v_vec) + "," +
-	    boost::lexical_cast<string>(v_acc), 1000);
-    return verifyAcknowledge();
+	    boost::lexical_cast<string>(v_acc) + "\r\n", 1000);
+    return verifyAcknowledge("USER DYNAMICS");
 }
 
 void DGPS::reset(bool cold_start)
@@ -120,7 +120,7 @@ bool DGPS::setRTKInputPort(string const& port_name)
     stringstream aux;
     aux << "$PASHS,DIF,PRT," << port_name << ",RT3\r\n";
     write(aux.str(), 1000);
-    return verifyAcknowledge();
+    return verifyAcknowledge("RTK INPUT PORT");
 }
 
 string DGPS::read(int timeout)
@@ -273,23 +273,23 @@ bool DGPS::setRTKBase(string port_name)
 void DGPS::stopRTKBase()
 {
     write("$PASHS,RT2,ALL,A,OFF\r\n", 1000);
-    verifyAcknowledge();
+    verifyAcknowledge("RT2,A,OFF");
     write("$PASHS,RT2,ALL,B,OFF\r\n", 1000);
-    verifyAcknowledge();
+    verifyAcknowledge("RT2,B,OFF");
     write("$PASHS,RT2,ALL,C,OFF\r\n", 1000);
-    verifyAcknowledge();
+    verifyAcknowledge("RT2,C,OFF");
     write("$PASHS,RT3,ALL,A,OFF\r\n", 1000);
-    verifyAcknowledge();
+    verifyAcknowledge("RT2,A,OFF");
     write("$PASHS,RT3,ALL,B,OFF\r\n", 1000);
-    verifyAcknowledge();
+    verifyAcknowledge("RT2,B,OFF");
     write("$PASHS,RT3,ALL,C,OFF\r\n", 1000);
-    verifyAcknowledge();
+    verifyAcknowledge("RT2,C,OFF");
 }
 
 bool DGPS::setRTKReset()
 {
     write("$PASHS,CPD,RST\r\n", 1000);
-    return verifyAcknowledge();
+    return verifyAcknowledge("RTK RESET");
 }
 
 bool DGPS::setCodeCorrelatorMode(CORRELATOR_MODE mode)
@@ -301,27 +301,27 @@ bool DGPS::setCodeCorrelatorMode(CORRELATOR_MODE mode)
         setting = 'S';
 
     write(string("$PASHS,CRR,") + setting + "\r\n", 1000);
-    return verifyAcknowledge();
+    return verifyAcknowledge("CODE CORRELATOR " + setting);
 }
 
-bool DGPS::setReceiverDynamics(DYNAMICS_MODE setting)
+bool DGPS::setReceiverDynamics(DYNAMICS_MODEL setting)
 {
     stringstream aux;
     aux << setting;
     write("$PASHS,DYN," + aux.str() + "\r\n", 1000);
-    return verifyAcknowledge();
+    return verifyAcknowledge("RECEIVER DYNAMICS " + setting);
 }
 
 bool DGPS::resetStoredPosition()
 {
     write("$PASHS,POS,MOV\r\n", 1000);
-    return verifyAcknowledge();
+    return verifyAcknowledge("RESET STORED POSITION");
 }
 
 bool DGPS::setPositionFromCurrent()
 {
     write("$PASHS,POS,CUR\r\n", 1000);
-    return verifyAcknowledge();
+    return verifyAcknowledge("SET POSITION FROM CURRENT");
 }
 
 static double deg2magellan(double value)
@@ -340,7 +340,7 @@ bool DGPS::setPosition(double latitude, double longitude, double height)
 	<< setprecision(4) << fixed << height
 	<< "\r\n";
     write(aux.str(), 1000);
-    return verifyAcknowledge();
+    return verifyAcknowledge("SET CURRENT POSITION");
 }
 
 bool DGPS::setKnownPointInit(double latitude, string NorS, double longitude, string EorW, double height, double accLat, double accLon, double accAlt, string posAttribute)
@@ -348,21 +348,21 @@ bool DGPS::setKnownPointInit(double latitude, string NorS, double longitude, str
     stringstream aux;
     aux << latitude << "," << NorS << "," << longitude << "," << EorW << "," << height << "," << accLat << "," << accLon << "," << accAlt << "," << posAttribute;
     write("$PASHS,KPI," + aux.str() + "\r\n", 1000);
-    return verifyAcknowledge();
+    return verifyAcknowledge("SET INITIAL POSITION");
 }
 
 bool DGPS::setGLONASSTracking(bool setting)
 {
     if(setting) write("$PASHS,GLO,ON\r\n",1000);
     else write("$PASHS,GLO,OFF\r\n", 1000);
-    return verifyAcknowledge();
+    return verifyAcknowledge("SET GLONASS TRACKING");
 }
 
 bool DGPS::setSBASTracking(bool setting)
 {
     if(setting) write("$PASHS,SBAS,ON\r\n",1000);
     else write("$PASHS,SBAS,OFF\r\n", 1000);
-    return verifyAcknowledge();
+    return verifyAcknowledge("SET SBAS TRACKING");
 }
 
 bool DGPS::setCodeMeasurementSmoothing(int d1, int d2, int d3)
@@ -399,7 +399,7 @@ bool DGPS::setCodeMeasurementSmoothing(int d1, int d2, int d3)
         return false;
     }
 
-    return verifyAcknowledge();
+    return verifyAcknowledge("CODE SMOOTHING");
 }
 
 bool DGPS::setNMEA(string command, string port, bool onOff, double outputRate)
@@ -419,7 +419,7 @@ bool DGPS::setNMEA(string command, string port, bool onOff, double outputRate)
     if(onOff) 	aux << command << "," << port << ",ON," << rate;
     else 	aux << command << "," << port << ",OFF," << rate;
     write("$PASHS,NME," + aux.str() + "\r\n", 1000);
-    return verifyAcknowledge();
+    return verifyAcknowledge("NMEA OUTPUT " + command + " " + (onOff ? "ON" : "OFF") + " " + rate);
 }
 
 bool DGPS::setPeriodicData(std::string const& port, double period)
@@ -465,10 +465,10 @@ bool DGPS::setNMEALL(string port, bool onOff)
     if (onOff) aux << port <<",ON";
     else aux << port << ",OFF";
     write("$PASHS,NME,ALL," + aux.str() + "\r\n", 1000);
-    return verifyAcknowledge();
+    return verifyAcknowledge("NMEA ALL");
 }
 
-bool DGPS::verifyAcknowledge()
+bool DGPS::verifyAcknowledge(std::string const& cmd)
 {
     string message;
     do
@@ -477,7 +477,7 @@ bool DGPS::verifyAcknowledge()
     }
     while( message.find("$PASHR,NAK") != 0 && message.find("$PASHR,ACK") != 0);
     if( message.find("$PASHR,NAK") == 0) {
-        cerr << "dpgs/mb500: command not acknowledged" << endl;
+        cerr << "dpgs/mb500: command " << cmd << " not acknowledged" << endl;
         return false;
     }
     else if(message.find("$PASHR,ACK") == 0) return true;
@@ -544,6 +544,7 @@ SolutionQuality DGPS::interpretQuality(string const& message)
     split( fields, message, is_any_of(",*") );
 
     SolutionQuality data;
+    data.time = base::Time::now();
     int sat_end = fields.size() - 4;
     for (int i = 3; i < sat_end; ++i)
     {
@@ -566,7 +567,7 @@ Errors DGPS::interpretErrors(string const& message)
     split( fields, message, is_any_of(",*") );
 
     Errors data;
-    data.timestamp = interpretTime(fields[1]);
+    data.time = interpretTime(fields[1]);
     data.deviationLatitude  = atof(fields[6].c_str());
     data.deviationLongitude = atof(fields[7].c_str());
     data.deviationAltitude  = atof(fields[8].c_str());
@@ -588,7 +589,10 @@ bool DGPS::interpretSatelliteInfo(SatelliteInfo& data, string const& message)
     // is spanned over multiple messages. We clear data if this is the first
     // message of a series.
     if (msg_number == 1 && message.find("$GPGSV") == 0)
-        data.clear();
+    {
+        data.knownSatellites.clear();
+        data.time = base::Time::now();
+    }
 
     // Compute the number of satellites in this message
     int field_count;
@@ -604,9 +608,9 @@ bool DGPS::interpretSatelliteInfo(SatelliteInfo& data, string const& message)
         sat.azimuth   = atoi(fields[6 + i * 4].c_str());
         sat.SNR       = atoi(fields[7 + i * 4].c_str());
 
-        data.push_back(sat);
+        data.knownSatellites.push_back(sat);
     }
-    return msg_number == msg_count;
+    return (msg_number == msg_count && message.find("$GLGSV") == 0);
 }
 
 Position DGPS::interpretInfo(string const& message)
@@ -619,7 +623,7 @@ Position DGPS::interpretInfo(string const& message)
 
     Position data;
 
-    data.timestamp = interpretTime(fields[1]);
+    data.time = interpretTime(fields[1]);
     data.latitude  = interpretAngle(fields[2], fields[3] == "N");
     data.longitude = interpretAngle(fields[4], fields[5] == "E");
     int position_type = atoi(fields[6].c_str());
@@ -644,7 +648,7 @@ double DGPS::interpretAngle(std::string const& value, bool positive)
     return angle;
 }
 
-DFKI::Time DGPS::interpretTime(std::string const& time)
+base::Time DGPS::interpretTime(std::string const& time)
 {
     float gps_time   = atof(time.c_str());
     int integer_part = gps_time;
@@ -662,7 +666,7 @@ DFKI::Time DGPS::interpretTime(std::string const& time)
 
     // And convert it back to seconds since epoch
     time_t gps_epoch = timegm(&utc_hms);
-    DFKI::Time result = DFKI::Time(gps_epoch, microsecs);
+    base::Time result = base::Time(gps_epoch, microsecs);
     return result;
 }
 
@@ -693,8 +697,8 @@ std::ostream& DGPS::display(std::ostream& io,
 	gps::SatelliteInfo const& satellites,
 	gps::SolutionQuality const& quality)
 {
-    time_t time_secs = pos.timestamp.toSeconds();
-    int time_msecs   = pos.timestamp.microseconds / 1000;
+    time_t time_secs = pos.time.toSeconds();
+    int time_msecs   = pos.time.microseconds / 1000;
 
     char* time_string = ctime(&time_secs);
     io
@@ -726,12 +730,13 @@ std::ostream& DGPS::display(std::ostream& io,
     }
 
     { // count the number of satellites in view, per constellation
-	int sat_count = satellites.size();
+	int sat_count = satellites.knownSatellites.size();
 	int counts[3] = { 0, 0, 0 };
 	for (int i = 0; i < sat_count; ++i)
 	{
-	    if (satellites[i].SNR > 0)
-		counts[satellites[i].getConstellation()]++;
+            Satellite const& sat = satellites.knownSatellites[i];
+	    if (sat.SNR > 0)
+		counts[sat.getConstellation()]++;
 	}
 	io << setw(2) << counts[0] << "/" << setw(2) << counts[2] << " ";
     }

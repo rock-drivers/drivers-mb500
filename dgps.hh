@@ -9,7 +9,6 @@
 #include <vector>
 #include "dgpstypes.hh"
 
-
 class DGPS : public IODriver {
 	public:
 		DGPS();
@@ -40,17 +39,6 @@ class DGPS : public IODriver {
                 };
                 /** Changes the code correlator, for multipath mitigation */
 		bool setCodeCorrelatorMode(CORRELATOR_MODE mode);
-                enum DYNAMICS_MODE {
-                    STATIC       = 1,
-                    QUASI_STATIC = 2,
-                    WALKING      = 3,
-                    SHIP         = 4,
-                    AUTOMOBILE   = 5,
-                    AIRCRAFT     = 6,
-                    UNLIMITED    = 7,
-                    ADAPTIVE     = 8,
-                    USER_DEFINED = 9
-                };
 
                 /** Reset the board. If \c cold_start is true, reset all stored
                  * information about the GNSS constellations
@@ -72,7 +60,7 @@ class DGPS : public IODriver {
                 void dumpSatellites();
 
                 /** Select the type of receiver motion */
-		bool setReceiverDynamics(DYNAMICS_MODE mode);
+		bool setReceiverDynamics(gps::DYNAMICS_MODEL mode);
 
 		/** Sets the board's user dynamics parameters. You must call
 		 * setReceiverDynamics(USER_DEFINED) explicitely afterwards to
@@ -104,7 +92,7 @@ class DGPS : public IODriver {
 		bool setCodeMeasurementSmoothing(int, int, int);
 		bool setNMEA(std::string, std::string, bool, double = 1);
 		bool setNMEALL(std::string, bool);
-		bool verifyAcknowledge();
+		bool verifyAcknowledge(std::string const& cmd = "");
 
 		/** Interprets a NMEA GST message and returns the unmarshalled
                  * GST structure
@@ -152,7 +140,7 @@ class DGPS : public IODriver {
 		static gps::Position interpretInfo(std::string const& msg);
 		static bool interpretSatelliteInfo(gps::SatelliteInfo& data, std::string const& msg);
                 static double interpretAngle(std::string const& value, bool positive);
-                static DFKI::Time  interpretTime(std::string const& time);
+                static base::Time  interpretTime(std::string const& time);
 
 		std::string read(int timeout);
 		void write(const std::string&, int timeout);
