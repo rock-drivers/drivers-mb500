@@ -1,0 +1,9 @@
+build/
+CMakeCache.txt
+Doxyfile
+cmake_install.cmake
+Makefile
+dgps.pc
+*.so
+dgps_test
+CMakeFiles
