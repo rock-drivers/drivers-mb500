@@ -33,7 +33,7 @@ TARGET_LINK_LIBRARIES(dgps_test dgps)
 INSTALL(TARGETS dgps #dgps_acq
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib)
-INSTALL(FILES dgps.hh DESTINATION include)
+INSTALL(FILES dgps.hh dgpstypes.hh DESTINATION include)
 
 CONFIGURE_FILE(Doxyfile.in Doxyfile @ONLY)
 ADD_CUSTOM_TARGET(doc doxygen Doxyfile)

@@ -7,35 +7,8 @@
 #include <sys/types.h>
 #include <iodrivers_base.hh>
 #include <vector>
+#include "dgpstypes.hh"
 
-struct GPSInfo {
-	double UTCTime;
-	double latitude;
-	double longitude;
-	int positionType;
-	int noOfSatellites;
-	double altitude;
-	double geoidalSeparation;
-	double ageOfDifferentialCorrections;
-};
-
-struct GPSErrors {
-	double deviationLatitude;
-	double deviationLongitude;
-	double deviationAltitude;
-};
-
-struct GPSSatellite {
-	int PRN;
-	int elevation;
-	int azimuth;
-	double SNR;
-};
-
-struct GPSSatelliteInfo {
-	int noOfSatellites;
-	std::vector < GPSSatellite> sat;
-};
 
 class DGPS : public IODriver {
 	public:
@@ -82,11 +55,23 @@ class DGPS : public IODriver {
 		bool setNMEA(std::string, std::string, bool, double = 1);
 		bool setNMEALL(std::string, bool);
 		bool verifyAcknowledge();
+		bool setPeriodicData();
 
 		//queries
-		GPSErrors getGST(std::string = "");
-		GPSInfo getGGA(std::string = "");
-		GPSSatelliteInfo getGSV(std::string = "");
+		gps::Errors getGST(std::string = "");
+		gps::Info getGGA(std::string = "");
+		gps::SatelliteInfo getGSV(std::string = "");
+
+		gps::Errors interpretErrors(std::string &);
+		gps::Info interpretInfo(std::string &);
+		gps::SatelliteInfo interpretSatelliteInfo(std::string &);
+		void collectPeriodicData();
+		bool stopPeriodicData();
+
+		gps::FullInfo data;
+		gps::SatelliteInfo dataSatellite;
+		bool releaseOK;
+		bool isOKtoReleaseData() { return releaseOK; };
 
 	protected:
 		int extractPacket(uint8_t const* buffer, size_t buffer_size) const;
