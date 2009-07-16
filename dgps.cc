@@ -1,12 +1,12 @@
 #include "dgps.hh"
 
-#include <map>
+#include <math.h>
+#include <string.h>
 #include <string>
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
 #include <iostream>
 #include <sstream>
+
+#include <boost/lexical_cast.hpp>
 
 #include <termio.h>
 #include <sys/types.h>
@@ -22,471 +22,459 @@
 using namespace std;
 using namespace gps;
 
-DGPS::DGPS() : IODriver(2048), baudrate(19200)
+DGPS::DGPS() : IODriver(2048)
 {
-	releaseOK = false;
 }
 
 DGPS::~DGPS()
 {
-	if (isValid()) close();
+    if (isValid()) close();
 }
 
 bool DGPS::open(const string& filename)
 {
-	if( !IODriver::openSerial(filename, 115200)) return false;
+    if( !IODriver::openSerial(filename, 115200))
+    {
+        cerr << "dgps/mb500: cannot open " << filename << " at 115200 bauds" << endl;
+        return false;
+    }
 
-	int fd = getFileDescriptor();
+    int fd = getFileDescriptor();
+
+    // Set up the serial line
     struct termios tio;
-    tcgetattr(fd,&tio);
     memset(&tio, 0, sizeof(tio));
     tio.c_cflag = CS8; // data bits = 8bit
-
-    // Commit
     if (tcsetattr(fd,TCSADRAIN,&tio)!=0)
+    {
+        cerr << "dgps/mb500: cannot set serial line properties" << endl;
         return false;
+    }
 
-	cout<<"GPS successfully initialized on "<< filename <<endl;
-
-	return stopPeriodicData();
+    return stopPeriodicData();
 }
 
 bool DGPS::stopPeriodicData()
 {
-	if(! setNMEALL("A", OFF)) return false;
-	if(! setNMEALL("B", OFF)) return false;
-	if(! setNMEALL("C", OFF)) return false;
-	return true;
+    if(! setNMEALL("A", false)) return false;
+    if(! setNMEALL("B", false)) return false;
+    if(! setNMEALL("C", false)) return false;
+    return true;
 }
 
 bool DGPS::close()
 {
-	IODriver::close();
-	return true;
+    IODriver::close();
+    return true;
 }
 
 string DGPS::read(int timeout)
 {
-	char buffer[MAX_PACKET_SIZE];
-	size_t packet_size = readPacket(reinterpret_cast<uint8_t *>( buffer), MAX_PACKET_SIZE, timeout);
-	cerr << "RD: " << string(buffer, packet_size) << endl;
-	return string(buffer, packet_size);
+    char buffer[MAX_PACKET_SIZE];
+    size_t packet_size = readPacket(reinterpret_cast<uint8_t *>( buffer), MAX_PACKET_SIZE, timeout);
+    return string(buffer, packet_size);
 }
 
-bool DGPS::write(const string& command, int timeout)
+void DGPS::write(const string& command, int timeout)
 {
-	size_t cmd_size = command.length();
-	try {
-		cerr << "WR: " << command << endl;
-		IODriver::writePacket(reinterpret_cast <uint8_t const*>(command.c_str()), cmd_size, timeout);
-		return true;
-	}
-	catch(...) { return false; }
+    size_t cmd_size = command.length();
+    try {
+        IODriver::writePacket(reinterpret_cast <uint8_t const*>(command.c_str()), cmd_size, timeout);
+    }
+    catch(...)
+    { throw std::runtime_error("dgps/mb500: error sending command"); }
 }
 
 
 int DGPS::extractPacket(uint8_t const* buffer, size_t buffer_size) const {
-	if(buffer[0] == '$')
-	{
-		for(size_t i = 1; i < buffer_size; ++i) if( buffer[i] == '\n') return i;
-		return 0;
-	}
+    if(buffer[0] == '$')
+    {
+        for(size_t i = 1; i < buffer_size; ++i)
+        {
+            if( buffer[i] == '\n')
+            {
+                // do a bit more validation, we should have a checksum
+                // at the end of the message
 
-	for(size_t i = 1; i < buffer_size; ++i)
-	{
-		if( buffer[i] == '$') return (-1) * (i);
-	}
-	return -buffer_size;
+                // Minimal message is $*FF\r\n
+                if (i < 5)
+                    return -i;
+                else if (buffer[i - 4] != '*')
+                    return -i;
+
+                // TODO: verify the checksum
+                return i;
+            }
+            else if (buffer[i] == '$')
+            {
+                // there seem to be a truncated packet, drop it
+                return -i;
+            }
+        }
+
+        return 0;
+    }
+
+    for(size_t i = 1; i < buffer_size; ++i)
+    {
+        if( buffer[i] == '$') return -i;
+    }
+    return -buffer_size;
 }
 
 bool DGPS::setRTKOutputMode(bool setting)
 {
-	bool result;
-	if(setting) result = write("$PASHS,CPD,FST,ON\r\n", 1000);
-	else result = write("$PASHS,CPD,FST,OFF\r\n", 1000);
-
-	if(result) return verifyAcknowledge();
-	return false;
+    if(setting) write("$PASHS,CPD,FST,ON\r\n", 1000);
+    else write("$PASHS,CPD,FST,OFF\r\n", 1000);
+    return verifyAcknowledge();
 }
 
 bool DGPS::setRTKReset()
 {
-	if(write("$PASHS,CPD,RST\r\n", 1000)) return verifyAcknowledge();
-	return false;
+    write("$PASHS,CPD,RST\r\n", 1000);
+    return verifyAcknowledge();
 }
 
-bool DGPS::setCodeCorrelatorMode(string setting)
+bool DGPS::setCodeCorrelatorMode(CORRELATOR_MODE mode)
 {
-	if(write("$PASHS,CRR," + setting + "\r\n", 1000)) return verifyAcknowledge();
-	return false;
+    char setting;
+    if (mode == EDGE_CORRELATOR)
+        setting = 'E';
+    else
+        setting = 'S';
+
+    write(string("$PASHS,CRR,") + setting + "\r\n", 1000);
+    return verifyAcknowledge();
 }
 
-bool DGPS::setReceiverDynamics(int setting)
+bool DGPS::setReceiverDynamics(DYNAMICS_MODE setting)
 {
-	stringstream aux;
-	aux << setting;
-	if(write("$PASHS,DYN," + aux.str() + "\r\n", 1000)) return verifyAcknowledge();
-	return false;
+    stringstream aux;
+    aux << setting;
+    write("$PASHS,DYN," + aux.str() + "\r\n", 1000);
+    return verifyAcknowledge();
 }
 
 bool DGPS::setKnownPointInit(double latitude, string NorS, double longitude, string EorW, double height, double accLat, double accLon, double accAlt, string posAttribute)
 {
-	stringstream aux;
-	aux << latitude << "," << NorS << "," << longitude << "," << EorW << "," << height << "," << accLat << "," << accLon << "," << accAlt << "," << posAttribute;
-	if(write("$PASHS,KPI," + aux.str() + "\r\n", 1000)) return verifyAcknowledge();
-	return false;
+    stringstream aux;
+    aux << latitude << "," << NorS << "," << longitude << "," << EorW << "," << height << "," << accLat << "," << accLon << "," << accAlt << "," << posAttribute;
+    write("$PASHS,KPI," + aux.str() + "\r\n", 1000);
+    return verifyAcknowledge();
+}
+
+bool DGPS::setGLONASSTracking(bool setting)
+{
+    if(setting) write("$PASHS,GLO,ON\r\n",1000);
+    else write("$PASHS,GLO,OFF\r\n", 1000);
+    return verifyAcknowledge();
 }
 
 bool DGPS::setSBASTracking(bool setting)
 {
-	bool result;
-	if(setting) result = write("$PASHS,SBAS,ON\r\n",1000);
-	else result = write("$PASHS,SBAS,OFF\r\n", 1000);
-	if(result) return verifyAcknowledge();
-	return false;
+    if(setting) write("$PASHS,SBAS,ON\r\n",1000);
+    else write("$PASHS,SBAS,OFF\r\n", 1000);
+    return verifyAcknowledge();
 }
 
 bool DGPS::setCodeMeasurementSmoothing(int d1, int d2, int d3)
 {
-	stringstream aux;
-	bool result;
-	if(d1 >= 0 && d1 <= 100) {
-		aux << d1;
-		if( d2 >= 100 && d2 <= 600) {
-			aux << "," << d2;
-			if( d3 >= 0 && d3 <= 3600) aux << "," << d3;
-			else if (d3 != NONE) {
-				cerr <<"Arguments invalid"<<endl;
-				return false;
-			}
-		}
-		else if (d2 != NONE) {
-			cerr <<"Arguments invalid"<<endl;
-			return false;
-		}
-		result = write("$PASHS,SMI," + aux.str() + "\r\n", 1000);
-	}
+    stringstream aux;
+    if(d1 >= 0 && d1 <= 100) {
+        aux << d1;
+        if( d2 >= 100 && d2 <= 600) {
+            aux << "," << d2;
+            if( d3 >= 0 && d3 <= 3600) aux << "," << d3;
+            else if (d3 != NONE) {
+                cerr <<"Arguments invalid"<<endl;
+                return false;
+            }
+        }
+        else if (d2 != NONE) {
+            cerr <<"Arguments invalid"<<endl;
+            return false;
+        }
+        write("$PASHS,SMI," + aux.str() + "\r\n", 1000);
+    }
 
-	else if(d1 >= 0 && d1 <= 100 && d2 == NONE && d3 >= 0 && d3 <= 3600) {
-		aux << d1 << ",," << d3;
-		result = write("$PASHS,SMI," + aux.str() + "\r\n", 1000);
-	}
+    else if(d1 >= 0 && d1 <= 100 && d2 == NONE && d3 >= 0 && d3 <= 3600) {
+        aux << d1 << ",," << d3;
+        write("$PASHS,SMI," + aux.str() + "\r\n", 1000);
+    }
 
-	else if(d1 == NONE && d2 == NONE && d3 >= 0 && d3 <= 3600) {
-		aux << ",," << d3;
-		result = write("$PASHS,SMI," + aux.str() + "\r\n", 1000);
-	}
-	else {
-		cerr<<"Arguments invalid"<<endl;
-		return false;
-	}
+    else if(d1 == NONE && d2 == NONE && d3 >= 0 && d3 <= 3600) {
+        aux << ",," << d3;
+        write("$PASHS,SMI," + aux.str() + "\r\n", 1000);
+    }
+    else {
+        cerr<<"Arguments invalid"<<endl;
+        return false;
+    }
 
-	if(result) return verifyAcknowledge();
-	return false;
+    return verifyAcknowledge();
 }
 
 bool DGPS::setNMEA(string command, string port, bool onOff, double outputRate)
 {
-	stringstream aux;
-	if(onOff) 	aux << command << "," << port << ",ON," << outputRate;
-	else 	aux << command << "," << port << ",OFF," << outputRate;
-	if(write("$PASHS,NME," + aux.str() + "\r\n", 1000)) return verifyAcknowledge();
-	return false;
+    stringstream aux;
+
+    string rate;
+    if (fabs(outputRate - 0.1) < 0.01)
+        rate = "0.1";
+    else if (fabs(outputRate - 0.2) < 0.01)
+        rate = "0.2";
+    else if (fabs(outputRate - 0.5) < 0.01)
+        rate = "0.5";
+    else
+        rate = boost::lexical_cast<string>(static_cast<int>(outputRate));
+
+    if(onOff) 	aux << command << "," << port << ",ON," << rate;
+    else 	aux << command << "," << port << ",OFF," << rate;
+    write("$PASHS,NME," + aux.str() + "\r\n", 1000);
+    return verifyAcknowledge();
 }
 
-bool DGPS::setPeriodicData()
+bool DGPS::setPeriodicData(std::string const& port, double period)
 {
-	if(! setNMEA("GGA", "B", true, 1)) return 0;
-	if(! setNMEA("GST", "B", true, 1)) return 0;
-	if(! setNMEA("GSV", "B", true, 1)) return 0;
-	return 1;
+    if(! setNMEA("GGA", port, true, 1)) return 0;
+    if(! setNMEA("GST", port, true, 1)) return 0;
+    if(! setNMEA("GSV", port, true, 1)) return 0;
+    return 1;
 }
 
-void DGPS::collectPeriodicData()
+bool DGPS::collectPeriodicData()
 {
-	cerr << "reading periodic data"<<endl;
-	string message = read(1000);
-	cerr << "done reading periodic data" <<endl;
+    string message = read(1000);
 
-	if( message.find("$GPGGA,") == 0 && data.info.UTCTime < data.errors.UTCTime ) data.info = interpretInfo(message);
-	else if( message.find("$GPGST,") == 0 || message.find("$GLGST,") == 0 || message.find("$GNGST,") == 0) data.errors = interpretErrors(message);
-	else if( message.find("$GPGSV,") == 0 || message.find("$GLGSV,") == 0) dataSatellite = interpretSatelliteInfo(message);
+    bool new_info = false;
+    if( message.find("$GPGGA,") == 0 )
+    {
+        new_info = true;
+        data.info = interpretInfo(message);
+    }
+    else if( message.find("$GPGST,") == 0 || message.find("$GLGST,") == 0 || message.find("$GNGST,") == 0)
+    {
+        new_info = true;
+        data.errors = interpretErrors(message);
+    }
+    else if( message.find("$GPGSV,") == 0 || message.find("$GLGSV,") == 0)
+        if (interpretSatelliteInfo(tempSatellites, message))
+            satellites = tempSatellites;
 
-	if( data.info.UTCTime == data.errors.UTCTime) {
-		cerr << "We have a synced data set at: "<< data.info.UTCTime <<endl;
-		releaseOK = true;
-	}
-	else releaseOK = false;
+    if( new_info && data.info.UTCTime == data.errors.UTCTime)
+        return true;
+    return false;
 }
 
 bool DGPS::setNMEALL(string port, bool onOff)
 {
-	stringstream aux;
-	if (onOff) aux << port <<",ON";
-	else aux << port << ",OFF";
-	if(write("$PASHS,NME,ALL," + aux.str() + "\r\n", 1000)) return verifyAcknowledge();
-	return false;
+    stringstream aux;
+    if (onOff) aux << port <<",ON";
+    else aux << port << ",OFF";
+    write("$PASHS,NME,ALL," + aux.str() + "\r\n", 1000);
+    return verifyAcknowledge();
 }
 
 bool DGPS::verifyAcknowledge()
 {
-	string message = read(1000);
-
-	//keep on reading until you find an ACK or NAK
-	while( message.find("$PASHR,NAK") != 0 && message.find("$PASHR,ACK") != 0) message = read(1000);
-	cerr << "Found ACK / NAK ................................ " << endl;
-	if( message.find("$PASHR,NAK") == 0) {
-		cerr<<"Command not acknowledged"<<endl;
-		return false;
-	}
-	else if(message.find("$PASHR,ACK") == 0) return true;
-	return false;
+    string message;
+    do
+    {
+        message = read(1000);
+    }
+    while( message.find("$PASHR,NAK") != 0 && message.find("$PASHR,ACK") != 0);
+    if( message.find("$PASHR,NAK") == 0) {
+        cerr << "dpgs/mb500: command not acknowledged" << endl;
+        return false;
+    }
+    else if(message.find("$PASHR,ACK") == 0) return true;
+    return false;
 }
 
 
 Errors DGPS::getGST(string port)
 {
-	if (port!= "") port = "," + port;
-	if( write("$PASHQ,GST" + port + "\r\n", 1000)) {
-		string result = read(1000);
-		cout<<result<<endl;
-		if( result.find("$PASHR,NAK") == 0) {
-			cerr<<"Command not acknowledged"<<endl;
-			throw runtime_error("Command not acknowledged");
-		}
-		return interpretErrors(result);
-	}
-	else throw runtime_error("Error while sending command");
+    if (port!= "") port = "," + port;
+    write("$PASHQ,GST" + port + "\r\n", 1000);
+
+    string result = read(1000);
+    if( result.find("$PASHR,NAK") == 0) {
+        cerr<<"Command not acknowledged"<<endl;
+        throw runtime_error("Command not acknowledged");
+    }
+    return interpretErrors(result);
 }
 
 Info DGPS::getGGA(string port)
 {
-	string result;
-	if (port!= "") port = "," + port;
-	if( write("$PASHQ,GGA" + port + "\r\n", 1000)) {
-		result = read(1000);
-		cout<<result<<endl;
-		if( result.find("$PASHR,NAK") == 0) {
-			cerr<<"Command not acknowledged"<<endl;
-			throw runtime_error("Command not acknowledged");
-		}
-	}
-	else throw runtime_error("Error while sending command");
+    string result;
+    if (port!= "") port = "," + port;
+    write("$PASHQ,GGA" + port + "\r\n", 1000);
 
-	return interpretInfo(result);
+    result = read(1000);
+    if( result.find("$PASHR,NAK") == 0) {
+        cerr<<"Command not acknowledged"<<endl;
+        throw runtime_error("Command not acknowledged");
+    }
+
+    return interpretInfo(result);
 }
 
 SatelliteInfo DGPS::getGSV(string port)
 {
-	string result;
-	if (port!= "") port = "," + port;
-	if( write("$PASHQ,GSV" + port + "\r\n", 1000)) {
-		result = read(1000);
-		cout<<result<<endl;
-		if( result.find("$PASHR,NAK") == 0) {
-			cerr<<"Command not acknowledged"<<endl;
-			throw runtime_error("Command not acknowledged");
-		}
-	}
-	else throw runtime_error("Error while sending command");
+    string msg;
+    if (port!= "") port = "," + port;
+    write("$PASHQ,GSV" + port + "\r\n", 1000);
 
-	return interpretSatelliteInfo(result);
+    SatelliteInfo data;
+    while(true)
+    {
+        msg = read(1000);
+        if( msg.find("$PASHR,NAK") == 0) {
+            cerr<<"Command not acknowledged"<<endl;
+            throw runtime_error("Command not acknowledged");
+        }
+        else if( msg.find("$GPGSV,") != 0 && msg.find("$GLGSV,") != 0)
+        {
+            if (interpretSatelliteInfo(data, msg))
+                return data;
+        }
+    }
 }
 
-Errors DGPS::interpretErrors(string &result)
+Errors DGPS::interpretErrors(string const& result)
 {
-	Errors data;
-	double m1, f2, f3, f4, f5, f6, f7, f8;
-	string header;
+    Errors data;
 
-	if( result.find("$GPGST,") == 0 || result.find("$GLGST,") == 0 || result.find("$GNGST,") == 0) {
+    if( result.find("$GPGST,") == 0 || result.find("$GLGST,") == 0 || result.find("$GNGST,") == 0) {
+        int pos = result.find_first_of(",", 0);
 
-		int pos = result.find_first_of(",", 0);
-		header = string(result, 0, pos);
+        int pos2 = result.find_first_of(",", pos+1);
+        data.UTCTime = interpretTime(string(result, pos+1, pos2-pos-1));
 
-		int pos2 = result.find_first_of(",", pos+1);
-		m1 = atof( string(result, pos+1, pos2-pos-1).c_str());
+        pos = result.find_first_of(",", pos2+1);
+        //float f2 = atof(string(result, pos2+1, pos - pos2 - 1).c_str());
 
-		pos = result.find_first_of(",", pos2+1);
-		f2 = atof(string(result, pos2+1, pos - pos2 - 1).c_str());
+        pos2 = result.find_first_of(",", pos+1);
+        //float f3 = atof( string(result, pos+1, pos2 - pos - 1).c_str());
 
-		pos2 = result.find_first_of(",", pos+1);
-		f3 = atof( string(result, pos+1, pos2 - pos - 1).c_str());
+        pos = result.find_first_of(",", pos2+1);
+        //float f4 = atof(string(result, pos2+1, pos - pos2 - 1).c_str());
 
-		pos = result.find_first_of(",", pos2+1);
-		f4 = atof(string(result, pos2+1, pos - pos2 - 1).c_str());
+        pos2 = result.find_first_of(",", pos+1);
+        //float f5 = atof( string(result, pos+1, pos2 - pos - 1).c_str());
 
-		pos2 = result.find_first_of(",", pos+1);
-		f5 = atof( string(result, pos+1, pos2 - pos - 1).c_str());
+        pos = result.find_first_of(",", pos2+1);
+        data.deviationLatitude = atof( string(result, pos2+1, pos - pos2 - 1).c_str());
 
-		pos = result.find_first_of(",", pos2+1);
-		f6 = atof( string(result, pos2+1, pos - pos2 - 1).c_str());
+        pos2 = result.find_first_of(",", pos+1);
+        data.deviationLongitude = atof( string(result, pos+1, pos2 - pos - 1).c_str());
 
-		pos2 = result.find_first_of(",", pos+1);
-		f7 = atof( string(result, pos+1, pos2 - pos - 1).c_str());
-
-		pos = result.find_first_of(",", pos2+1);
-		f8 = atof( string(result, pos2+1, pos - pos2 -1).c_str());
-	}
-
-	cerr<< header <<endl<<m1<<endl<<f2<<endl<<f3<<endl<<f4<<endl<<f5<<endl<<f6<<endl<<f7<<endl<<f8<<endl;
-
-	data.UTCTime = m1;
-	data.deviationLatitude = f6;
-	data.deviationLongitude = f7;
-	data.deviationAltitude = f8;
-	return data;
+        pos = result.find_first_of(",", pos2+1);
+        data.deviationAltitude = atof( string(result, pos2+1, pos - pos2 -1).c_str());
+    }
+    return data;
 }
 
-SatelliteInfo DGPS::interpretSatelliteInfo(string &result)
+bool DGPS::interpretSatelliteInfo(SatelliteInfo& data, string const& result)
 {
-	int d1, d2, d3, d4, d5, d6;
-	double f7;
-	SatelliteInfo data;
+    if( result.find("$GPGSV,") != 0 && result.find("$GLGSV,") != 0)
+        throw std::runtime_error("wrong message given to interpretSatelliteInfo");
 
-	if( result.find("$GPGSV,") == 0 || result.find("$GLGSV,") == 0) {
-		int pos = result.find_first_of(",", 7);
-		d1 = atoi( string(result, 7, pos-7).c_str());
+    int pos = result.find_first_of(",", 7);
+    int msg_count = atoi( string(result, 7, pos-7).c_str());
 
-		int pos2 = result.find_first_of(",", pos+1);
-		d2 = atoi( string(result, pos+1, pos2-pos-1).c_str());
+    int pos2 = result.find_first_of(",", pos+1);
+    int msg_number = atoi( string(result, pos+1, pos2-pos-1).c_str());
 
-		pos = result.find_first_of(",", pos2+1);
-		d3 = atoi(string(result, pos2+1, pos - pos2 - 1).c_str());
+    pos = result.find_first_of(",", pos2+1);
+    int sat_count = atoi(string(result, pos2+1, pos - pos2 - 1).c_str());
 
-		int noSatTot = d3, noSatLine;
-		if(noSatTot >= 4) noSatLine = 4;
-		else noSatLine = noSatTot;
-		data.noOfSatellites = d3;
-		data.sat.clear();
-		Satellite sat;
+    if (msg_number == 1)
+        data.clear();
 
-		cout<<d1<<endl<<d2<<endl<<d3<<endl;
-		for(int i=0; i<noSatLine; ++i) {
-			pos2 = result.find_first_of(",", pos+1);
-			d4 = atoi( string(result, pos+1, pos2 - pos - 1).c_str());
+    int field_count;
+    if (msg_number != msg_count)
+        field_count = 4;
+    else
+        field_count = sat_count % 4;
 
-			pos = result.find_first_of(",", pos2+1);
-			d5 = atoi( string(result, pos2+1, pos - pos2 - 1).c_str());
+    Satellite sat;
+    for(int i=0; i<field_count; ++i) {
+        pos2 = result.find_first_of(",", pos+1);
+        sat.PRN = atoi( string(result, pos+1, pos2 - pos - 1).c_str());
 
-			pos2 = result.find_first_of(",", pos+1);
-			d6 = atoi( string(result, pos+1, pos2 - pos - 1).c_str());
+        pos = result.find_first_of(",", pos2+1);
+        sat.elevation = atoi( string(result, pos2+1, pos - pos2 - 1).c_str());
 
-			pos = result.find_first_of(",", pos2+1);
-			f7 = atof( string(result, pos2+1, pos - pos2 - 1).c_str());
+        pos2 = result.find_first_of(",", pos+1);
+        sat.azimuth = atoi( string(result, pos+1, pos2 - pos - 1).c_str());
 
-			sat.PRN = d4;
-			sat.elevation = d5;
-			sat.azimuth = d6;
-			sat.SNR = f7;
-			data.sat.push_back(sat);
+        pos = result.find_first_of(",", pos2+1);
+        sat.SNR = atof( string(result, pos2+1, pos - pos2 - 1).c_str());
 
-			cout<<d4<<" "<<d5<<" "<<d6<<" "<<f7<<endl;
-		}
-		noSatTot -= 4;
-
-		while(noSatTot > 0) {
-			result = read(1000);
-			cout<<result<<endl;
-
-
-			if(noSatTot >= 4) noSatLine = 4;
-			else noSatLine = noSatTot;
-
-			int pos = result.find_first_of(",", 7);
-			d1 = atoi( string(result, 7, pos-7).c_str());
-
-			int pos2 = result.find_first_of(",", pos+1);
-			d2 = atoi( string(result, pos+1, pos2-pos-1).c_str());
-
-			pos = result.find_first_of(",", pos2+1);
-			d3 = atoi(string(result, pos2+1, pos - pos2 - 1).c_str());
-			cout<<d1<<endl<<d2<<endl<<d3<<endl;
-
-			for(int i=0; i<noSatLine; ++i) {
-				pos2 = result.find_first_of(",", pos+1);
-				d4 = atoi( string(result, pos+1, pos2 - pos - 1).c_str());
-
-				pos = result.find_first_of(",", pos2+1);
-				d5 = atoi( string(result, pos2+1, pos - pos2 - 1).c_str());
-
-				pos2 = result.find_first_of(",", pos+1);
-				d6 = atoi( string(result, pos+1, pos2 - pos - 1).c_str());
-
-				pos = result.find_first_of(",", pos2+1);
-				f7 = atof( string(result, pos2+1, pos - pos2 - 1).c_str());
-
-				sat.PRN = d4;
-				sat.elevation = d5;
-				sat.azimuth = d6;
-				sat.SNR = f7;
-				data.sat.push_back(sat);
-
-				cout<<d4<<" "<<d5<<" "<<d6<<" "<<f7<<endl;
-			}
-			noSatTot -= 4;
-		}
-	}
-	return data;
+        data.push_back(sat);
+    }
+    return msg_number == msg_count;
 }
 
-Info DGPS::interpretInfo(string &result)
+Info DGPS::interpretInfo(string const& result)
 {
-	Info data;
+    Info data;
 
-	double m1, m2, m4, f8, f9, f10, f11;
-	string c3, c5;
-	int d6, d7, d12;
-	if( result.find("$GPGGA,") == 0) {
-		int pos = result.find_first_of(",", 7);
-		m1 = atof( string(result, 7, pos-7).c_str());
+    double m1, m2, m4, f8, f9, f10, f11;
+    string c3, c5;
+    int d6, d7, d12;
+    if( !result.find("$GPGGA,") == 0)
+        throw std::runtime_error("invalid message in interpretInfo");
 
-		int pos2 = result.find_first_of(",", pos+1);
-		m2 = atof( string(result, pos+1, pos2-pos-1).c_str());
+    int pos = result.find_first_of(",", 7);
+    data.UTCTime = interpretTime(string(result, 7, pos-7));
 
-		pos = result.find_first_of(",", pos2+1);
-		c3 = string(result, pos2+1, pos - pos2 - 1);
-		if (c3 == "S") m2 = -m2;
+    int pos2 = result.find_first_of(",", pos+1);
+    data.latitude = atof( string(result, pos+1, pos2-pos-1).c_str());
 
-		pos2 = result.find_first_of(",", pos+1);
-		m4 = atof( string(result, pos+1, pos2 - pos - 1).c_str());
+    pos = result.find_first_of(",", pos2+1);
+    if (result[pos2 + 1] == 'S') data.latitude = -data.latitude;
 
-		pos = result.find_first_of(",", pos2+1);
-		c5 = string(result, pos2+1, pos - pos2 - 1);
-		if (c5 == "W") m4 = -m4;
+    pos2 = result.find_first_of(",", pos+1);
+    data.longitude = atof( string(result, pos+1, pos2 - pos - 1).c_str());
 
-		pos2 = result.find_first_of(",", pos+1);
-		d6 = atoi( string(result, pos+1, pos2 - pos - 1).c_str());
+    pos = result.find_first_of(",", pos2+1);
+    if (result[pos2 + 1] == 'W') data.longitude = -data.longitude;
 
-		pos = result.find_first_of(",", pos2+1);
-		d7 = atoi( string(result, pos2+1, pos - pos2 - 1).c_str());
+    pos2 = result.find_first_of(",", pos+1);
+    data.positionType = static_cast<GPS_SOLUTION_TYPES>(atoi( string(result, pos+1, pos2 - pos - 1).c_str()));
 
-		pos2 = result.find_first_of(",", pos+1);
-		f8 = atof( string(result, pos+1, pos2 - pos - 1).c_str());
+    pos = result.find_first_of(",", pos2+1);
+    data.noOfSatellites = atoi( string(result, pos2+1, pos - pos2 - 1).c_str());
 
-		pos = result.find_first_of(",", pos2+1);
-		f9 = atof( string(result, pos2+1, pos - pos2 -1).c_str());
-		if( result[pos+1] == 'M') pos += 2;
+    pos2 = result.find_first_of(",", pos+1);
+    f8 = atof( string(result, pos+1, pos2 - pos - 1).c_str());
 
-		pos2 = result.find_first_of(",", pos+1);
-		f10 = atof( string(result, pos+1, pos - pos - 1).c_str());
-		if( result[pos2+1] == 'M') pos2 += 2;
+    pos = result.find_first_of(",", pos2+1);
+    data.altitude = atof( string(result, pos2+1, pos - pos2 -1).c_str());
+    if( result[pos+1] == 'M') pos += 2;
 
-		pos = result.find_first_of(",", pos2+1);
-		f11 = atof( string(result, pos2+1, pos - pos2 - 1).c_str());
+    pos2 = result.find_first_of(",", pos+1);
+    data.geoidalSeparation = atof( string(result, pos+1, pos - pos - 1).c_str());
+    if( result[pos2+1] == 'M') pos2 += 2;
 
-		pos2 = result.find_first_of(".", pos+1);
-		d12 = atoi( string(result, pos+1, pos2 - pos - 1).c_str());
+    pos = result.find_first_of(",", pos2+1);
+    data.ageOfDifferentialCorrections = atof( string(result, pos2+1, pos - pos2 - 1).c_str());
 
-		cout<< m1 <<endl<<m2<<endl<<c3<<endl<<m4<<endl<<c5<<endl<<d6<<endl<<d7<<endl<<f8<<endl<<f9<<endl<<f10<<endl<<f11<<endl<<d12<<endl;
-		data.UTCTime = m1;
-		data.latitude = m2;
-		data.longitude = m4;
-		data.positionType = d6;
-		data.noOfSatellites = d7;
-		data.altitude = f9;
-		data.geoidalSeparation = f10;
-		data.ageOfDifferentialCorrections = f11;
-	}
-	return data;
+    pos2 = result.find_first_of(".", pos+1);
+    d12 = atoi( string(result, pos+1, pos2 - pos - 1).c_str());
+
+    return data;
 }
+
+int DGPS::interpretTime(std::string const& time)
+{
+    int m1 = atof(time.c_str()) * 100;
+    int h = static_cast<int>(m1 / 1000000) * 3600;
+    int m = static_cast<int>(m1 / 10000) % 100 * 60;
+    int s = static_cast<int>(m1) % 10000;
+    return (h + m) * 1000 + s * 10;
+}
+
