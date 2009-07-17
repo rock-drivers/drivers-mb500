@@ -242,28 +242,19 @@ bool DGPS::setPeriodicData(std::string const& port, double period)
     return 1;
 }
 
-bool DGPS::collectPeriodicData()
+void DGPS::collectPeriodicData()
 {
     string message = read(1000);
 
-    bool new_info = false;
     if( message.find("$GPGGA,") == 0 )
-    {
-        new_info = true;
-        data.info = interpretInfo(message);
-    }
+        this->position = interpretInfo(message);
     else if( message.find("$GPGST,") == 0 || message.find("$GLGST,") == 0 || message.find("$GNGST,") == 0)
-    {
-        new_info = true;
-        data.errors = interpretErrors(message);
-    }
+        this->errors = interpretErrors(message);
     else if( message.find("$GPGSV,") == 0 || message.find("$GLGSV,") == 0)
+    {
         if (interpretSatelliteInfo(tempSatellites, message))
             satellites = tempSatellites;
-
-    if( new_info && data.info.UTCTime == data.errors.UTCTime)
-        return true;
-    return false;
+    }
 }
 
 bool DGPS::setNMEALL(string port, bool onOff)
