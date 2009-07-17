@@ -5,86 +5,90 @@
 #include <vector>
 #endif
 
+#include <dfki/base_types.h>
+
 namespace gps {
-        enum GPS_SOLUTION_TYPES
-        {
-            NO_SOLUTION  = 0,
-            AUTONOMOUS   = 1,
-            DIFFERENTIAL = 2,
-            RTK_FIXED    = 3,
-            RTK_FLOAT    = 4
-        };
+    enum GPS_SOLUTION_TYPES
+    {
+        NO_SOLUTION  = 0,
+        AUTONOMOUS   = 1,
+        DIFFERENTIAL = 2,
+        RTK_FIXED    = 3,
+        RTK_FLOAT    = 4
+    };
 
-        enum FIRMWARE_OPTIONS
-        {
-            UPDATE_RATE        = 1,
-            RTK_ROVER          = 2,
-            RTK_BASE           = 4,
-            PPS_OUTPUT         = 8,
-            EVENT_MARKER       = 16,
-            SBAS_TRACKING      = 32,
-            GLONASS_TRACKING   = 64,
-            RTK_MOVING_BASE    = 128,
-            HEADING            = 256,
-            ADVANCED_MULTIPATH = 512
-        };
+    enum FIRMWARE_OPTIONS
+    {
+        UPDATE_RATE        = 1,
+        RTK_ROVER          = 2,
+        RTK_BASE           = 4,
+        PPS_OUTPUT         = 8,
+        EVENT_MARKER       = 16,
+        SBAS_TRACKING      = 32,
+        GLONASS_TRACKING   = 64,
+        RTK_MOVING_BASE    = 128,
+        HEADING            = 256,
+        ADVANCED_MULTIPATH = 512
+    };
 
-        struct ReceiverInfo
-        {
-            std::string board_type;
-            std::string firmware_version;
-            int options;
-            std::string serial_number;
-        };
+    struct Solution {
+        DFKI::Time timestamp;
+        double latitude;
+        double longitude;
+        GPS_SOLUTION_TYPES positionType;
+        int noOfSatellites;
+        double altitude;
+        double geoidalSeparation;
+        double ageOfDifferentialCorrections;
 
-	struct Info {
-		int UTCTime;
-		double latitude;
-		double longitude;
-		GPS_SOLUTION_TYPES positionType;
-		int noOfSatellites;
-		double altitude;
-		double geoidalSeparation;
-		double ageOfDifferentialCorrections;
-	};
+        double deviationLatitude;
+        double deviationLongitude;
+        double deviationAltitude;
+    };
 
-	struct Errors {
-		int UTCTime;
-		double deviationLatitude;
-		double deviationLongitude;
-		double deviationAltitude;
-	};
+    struct Position {
+        DFKI::Time timestamp;
+        double latitude;
+        double longitude;
+        GPS_SOLUTION_TYPES positionType;
+        int noOfSatellites;
+        double altitude;
+        double geoidalSeparation;
+        double ageOfDifferentialCorrections;
+    };
 
-	struct FullInfo {
-		Errors errors;
-		Info info;
-	};
+    struct Errors {
+        DFKI::Time timestamp;
+        double deviationLatitude;
+        double deviationLongitude;
+        double deviationAltitude;
+    };
 
-	enum CONSTELLATIONS {
-	    CONSTELLATION_GPS,
-	    CONSTELLATION_SBAS,
-	    CONSTELLATION_GLONASS
-	};
-	struct Satellite {
-		int PRN;
-		int elevation;
-		int azimuth;
-		double SNR;
+    enum CONSTELLATIONS {
+        CONSTELLATION_GPS,
+        CONSTELLATION_SBAS,
+        CONSTELLATION_GLONASS
+    };
+    struct Satellite {
+        int PRN;
+        int elevation;
+        int azimuth;
+        double SNR;
 
 #ifndef __orogen
-		CONSTELLATIONS getConstellation() const
-		{
-		    if (PRN < 33)
-			return CONSTELLATION_GPS;
-		    else if (PRN < 65)
-			return CONSTELLATION_SBAS;
-		    else
-			return CONSTELLATION_GLONASS;
-		}
+        CONSTELLATIONS getConstellation() const
+        {
+            if (PRN < 33)
+                return CONSTELLATION_GPS;
+            else if (PRN < 65)
+                return CONSTELLATION_SBAS;
+            else
+                return CONSTELLATION_GLONASS;
+        }
 #endif
-	};
+    };
 
-	typedef std::vector < gps::Satellite> SatelliteInfo;
+    typedef std::vector < gps::Satellite> SatelliteInfo;
 }
 
 #endif

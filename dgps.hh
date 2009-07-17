@@ -70,7 +70,7 @@ class DGPS : public IODriver {
                 /** Interprets a NMEA GGA message and returns the unmarshalled
                  * GGA structure
                  */
-		gps::Info getGGA(std::string msg);
+		gps::Position getGGA(std::string msg);
                 /** Interprets a NMEA GSV message and returns the unmarshalled
                  * SatelliteInfo structure
                  */
@@ -90,20 +90,21 @@ class DGPS : public IODriver {
                  * a new, synchronized set of information. Otherwise, call
                  * collectPeriodicData again.
                  */
-		bool collectPeriodicData();
+		void collectPeriodicData();
                 /** Make the receiver stop sending periodic data */
 		bool stopPeriodicData();
 
-		gps::FullInfo data;
+		gps::Position position;
+		gps::Errors   errors;
 		gps::SatelliteInfo satellites;
 
 	protected:
 		gps::SatelliteInfo tempSatellites;
 
 		static gps::Errors interpretErrors(std::string const& msg);
-		static gps::Info interpretInfo(std::string const& msg);
+		static gps::Position interpretInfo(std::string const& msg);
 		static bool interpretSatelliteInfo(gps::SatelliteInfo& data, std::string const& msg);
-                static int interpretTime(std::string const& time);
+                static DFKI::Time  interpretTime(std::string const& time);
 
 		std::string read(int timeout);
 		void write(const std::string&, int timeout);

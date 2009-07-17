@@ -305,7 +305,7 @@ Errors DGPS::getGST(string port)
     return interpretErrors(result);
 }
 
-Info DGPS::getGGA(string port)
+Position DGPS::getGGA(string port)
 {
     string result;
     if (port!= "") port = "," + port;
@@ -350,7 +350,7 @@ Errors DGPS::interpretErrors(string const& result)
         int pos = result.find_first_of(",", 0);
 
         int pos2 = result.find_first_of(",", pos+1);
-        data.UTCTime = interpretTime(string(result, pos+1, pos2-pos-1));
+        data.timestamp = interpretTime(string(result, pos+1, pos2-pos-1));
 
         pos = result.find_first_of(",", pos2+1);
         //float f2 = atof(string(result, pos2+1, pos - pos2 - 1).c_str());
@@ -418,9 +418,9 @@ bool DGPS::interpretSatelliteInfo(SatelliteInfo& data, string const& result)
     return msg_number == msg_count;
 }
 
-Info DGPS::interpretInfo(string const& result)
+Position DGPS::interpretInfo(string const& result)
 {
-    Info data;
+    Position data;
 
     double m1, m2, m4, f8, f9, f10, f11;
     string c3, c5;
@@ -429,7 +429,7 @@ Info DGPS::interpretInfo(string const& result)
         throw std::runtime_error("invalid message in interpretInfo");
 
     int pos = result.find_first_of(",", 7);
-    data.UTCTime = interpretTime(string(result, 7, pos-7));
+    data.timestamp = interpretTime(string(result, 7, pos-7));
 
     int pos2 = result.find_first_of(",", pos+1);
     data.latitude = atof( string(result, pos+1, pos2-pos-1).c_str());
@@ -469,12 +469,13 @@ Info DGPS::interpretInfo(string const& result)
     return data;
 }
 
-int DGPS::interpretTime(std::string const& time)
+DFKI::Time DGPS::interpretTime(std::string const& time)
 {
     int m1 = atof(time.c_str()) * 100;
     int h = static_cast<int>(m1 / 1000000) * 3600;
     int m = static_cast<int>(m1 / 10000) % 100 * 60;
     int s = static_cast<int>(m1) % 10000;
-    return (h + m) * 1000 + s * 10;
+    DFKI::Time result = DFKI::Time(h + m + s / 100, (s % 100) * 10000);
+    return result;
 }
 
