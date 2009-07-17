@@ -11,7 +11,7 @@ int main (int argc, const char** argv){
 
     if (argc != 3)
     {
-        cerr << "usage: dgps_test device port" << endl;
+        cerr << "usage: dgps_test device_name port_name" << endl;
         return 1;
     }
 
@@ -21,6 +21,7 @@ int main (int argc, const char** argv){
     if(!gps.open(device_name))
         return 1;
 
+    // gps.reset(true);
     char const* solutioNames[] = {
         "NONE",
         "AUTONOMOUS",
@@ -45,20 +46,25 @@ int main (int argc, const char** argv){
         cout << setw(10) << fields[i] << " ";
     cout << endl;
 
+    DFKI::Time last_update;
+
     while(true)
     {
-        if (gps.collectPeriodicData())
+        gps.collectPeriodicData();
+        if (gps.position.timestamp == gps.errors.timestamp && (gps.position.timestamp > last_update || last_update == DFKI::Time()))
         {
+            last_update = gps.position.timestamp;
+
 	    cout
-		<< setw(10) << gps.data.info.UTCTime << " "
-		<< setw(8) << gps.data.info.longitude << " "
-		<< setw(8) << gps.data.info.latitude << " "
-		<< setw(8) << gps.data.info.altitude << " "
-		<< setw(8) << gps.data.errors.deviationLongitude << " "
-		<< setw(8) << gps.data.errors.deviationLatitude << " "
-		<< setw(8) << gps.data.errors.deviationAltitude << " "
-                << setw(10) << solutioNames[gps.data.info.positionType] << " "
-                << setw(5) << gps.data.info.noOfSatellites << " ";
+		<< setw(10) << gps.position.timestamp.toMilliseconds() << " "
+		<< setw(8) << gps.position.longitude << " "
+		<< setw(8) << gps.position.latitude << " "
+		<< setw(8) << gps.position.altitude << " "
+		<< setw(8) << gps.errors.deviationLongitude << " "
+		<< setw(8) << gps.errors.deviationLatitude << " "
+		<< setw(8) << gps.errors.deviationAltitude << " "
+                << setw(10) << solutioNames[gps.position.positionType] << " "
+                << setw(5) << gps.position.noOfSatellites << " ";
 
             int sat_count = gps.satellites.size();
             int counts[3] = { 0, 0, 0 };
