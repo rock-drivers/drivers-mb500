@@ -381,7 +381,7 @@ bool DGPS::interpretSatelliteInfo(SatelliteInfo& data, string const& result)
     pos = result.find_first_of(",", pos2+1);
     int sat_count = atoi(string(result, pos2+1, pos - pos2 - 1).c_str());
 
-    if (msg_number == 1)
+    if (msg_number == 1 && result.find("$GPGSV") == 0)
         data.clear();
 
     int field_count;
