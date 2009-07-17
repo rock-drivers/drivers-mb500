@@ -41,6 +41,17 @@ class DGPS : public IODriver {
                     USER_DEFINED = 9
                 };
 
+                /** Reset the board. If \c cold_start is true, reset all stored
+                 * information about the GNSS constellations
+                 */
+                void reset(bool cold_start);
+
+                /** Dumps the almanac on stdout.
+                 *
+                 * Do it right after open()
+                 */
+                void dumpAlmanac();
+
                 /** Select the type of receiver motion */
 		bool setReceiverDynamics(DYNAMICS_MODE mode);
 

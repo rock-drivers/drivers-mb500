@@ -54,6 +54,16 @@ bool DGPS::open(const string& filename)
     return stopPeriodicData();
 }
 
+void DGPS::reset(bool cold_start)
+{
+    if (cold_start)
+        write("$PASHS,INI,9,9,1\r\n", 1000);
+    else
+        write("$PASHS,INI,9,9,5\r\n", 1000);
+
+    stopPeriodicData();
+}
+
 bool DGPS::stopPeriodicData()
 {
     if(! setNMEALL("A", false)) return false;
@@ -73,6 +83,19 @@ string DGPS::read(int timeout)
     char buffer[MAX_PACKET_SIZE];
     size_t packet_size = readPacket(reinterpret_cast<uint8_t *>( buffer), MAX_PACKET_SIZE, timeout);
     return string(buffer, packet_size);
+}
+
+void DGPS::dumpAlmanac()
+{
+    write("$PASHQ,ALM\r\n", 1000);
+    while(true)
+    {
+        string msg = read(10);
+        if (msg.find("ALM") != string::npos)
+            cout << msg << endl;
+        else
+            throw std::runtime_error("wrong reply in dumpAlmanac");
+    }
 }
 
 void DGPS::write(const string& command, int timeout)
