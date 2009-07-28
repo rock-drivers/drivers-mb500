@@ -314,7 +314,7 @@ bool DGPS::setPeriodicData(std::string const& port, double period)
 
 void DGPS::collectPeriodicData()
 {
-    string message = read(1000);
+    string message = read(1500);
 
     if( message.find("$GPGGA,") == 0 )
         this->position = interpretInfo(message);
