@@ -51,7 +51,9 @@ bool DGPS::open(const string& filename)
         return false;
     }
 
-    return stopPeriodicData();
+    stopPeriodicData();
+    stopRTKBase();
+    return true;
 }
 
 void DGPS::reset(bool cold_start)
@@ -152,6 +154,39 @@ bool DGPS::setRTKOutputMode(bool setting)
     return verifyAcknowledge();
 }
 
+void DGPS::setRTKBase(string port_name)
+{
+    stringstream aux;
+    aux << "$PASHS,RT2,18," << port_name << ",ON\r\n";
+    aux << "$PASHS,RT2,19," << port_name << ",ON\r\n";
+    aux << "$PASHS,RT2,24," << port_name << ",ON,13\r\n";
+    aux << "$PASHS,RT2,23," << port_name << ",ON,31\r\n";
+
+    // aux << "$PASHS,RT3,1004," << port_name << ",ON\r\n";
+    // aux << "$PASHS,RT3,1012," << port_name << ",ON\r\n";
+    // aux << "$PASHS,RT3,1006," << port_name << ",ON,13\r\n";
+    // aux << "$PASHS,RT3,1033," << port_name << ",ON,31\r\n";
+    write(aux.str(), 1000);
+    for (int i = 0; i < 4; ++i)
+	verifyAcknowledge();
+}
+
+void DGPS::stopRTKBase()
+{
+    write("$PASHS,RT2,ALL,A,OFF\r\n", 1000);
+    verifyAcknowledge();
+    write("$PASHS,RT2,ALL,B,OFF\r\n", 1000);
+    verifyAcknowledge();
+    write("$PASHS,RT2,ALL,C,OFF\r\n", 1000);
+    verifyAcknowledge();
+    write("$PASHS,RT3,ALL,A,OFF\r\n", 1000);
+    verifyAcknowledge();
+    write("$PASHS,RT3,ALL,B,OFF\r\n", 1000);
+    verifyAcknowledge();
+    write("$PASHS,RT3,ALL,C,OFF\r\n", 1000);
+    verifyAcknowledge();
+}
+
 bool DGPS::setRTKReset()
 {
     write("$PASHS,CPD,RST\r\n", 1000);
@@ -175,6 +210,18 @@ bool DGPS::setReceiverDynamics(DYNAMICS_MODE setting)
     stringstream aux;
     aux << setting;
     write("$PASHS,DYN," + aux.str() + "\r\n", 1000);
+    return verifyAcknowledge();
+}
+
+bool DGPS::setPosition(double latitude, double longitude, double height)
+{
+    stringstream aux;
+    aux << "$PASHS,POS,"
+	<< fabs(latitude) << "," << (latitude > 0 ? 'N' : 'S') << ","
+	<< fabs(longitude) << "," << (longitude > 0 ? 'W' : 'E') << ","
+	<< height
+	<< "\r\n";
+    write(aux.str(), 1000);
     return verifyAcknowledge();
 }
 

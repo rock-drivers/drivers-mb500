@@ -18,6 +18,10 @@ class DGPS : public IODriver {
 		bool open(const std::string& device_name);
 		bool close();
 
+		/** Make the base output RTCM 3.0 correction messages on the provided port */
+		void setRTKBase(std::string port_name);
+		/** Stop the output of any RTCM 3.0 messages */
+		void stopRTKBase();
                 /** Enables or disables RTK output */
 		bool setRTKOutputMode(bool enable);
                 /** Resets the RTK filter */
@@ -60,6 +64,9 @@ class DGPS : public IODriver {
                  * model used).
                  */
 		bool setKnownPointInit(double, std::string, double, std::string, double, double, double, double, std::string);
+
+		/** Sets the current receiver position. Required to go into RTK base mode. */
+		bool setPosition(double latitude, double longitude, double height);
 
                 /** Enable/disable GLONASS tracking */
 		bool setGLONASSTracking(bool);
