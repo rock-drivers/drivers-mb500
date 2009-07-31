@@ -27,6 +27,9 @@ TARGET_LINK_LIBRARIES(dgps ${DFKI_TYPES_LIBRARIES} ${IO_LIBRARIES})
 ADD_EXECUTABLE(dgps_base dgps_base.cc)
 TARGET_LINK_LIBRARIES(dgps_base dgps)
 
+ADD_EXECUTABLE(dgps_rover dgps_rover.cc)
+TARGET_LINK_LIBRARIES(dgps_rover dgps)
+
 ADD_EXECUTABLE(dgps_test dgps_test.cc)
 TARGET_LINK_LIBRARIES(dgps_test dgps)
 

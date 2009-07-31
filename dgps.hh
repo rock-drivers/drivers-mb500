@@ -26,6 +26,9 @@ class DGPS : public IODriver {
 		bool setRTKOutputMode(bool enable);
                 /** Resets the RTK filter */
 		bool setRTKReset(); 
+                /** Sets the port on which the RTK corrections will be received
+                 */
+                bool setRTKInputPort(std::string const& port);
 
                 enum CORRELATOR_MODE {
                     EDGE_CORRELATOR,
@@ -55,6 +58,12 @@ class DGPS : public IODriver {
                  * Do it right after open()
                  */
                 void dumpAlmanac();
+
+                /** Dumps the receiver status on stdout
+                 *
+                 * Do it right after open()
+                 */
+                void dumpStatus();
 
                 /** Select the type of receiver motion */
 		bool setReceiverDynamics(DYNAMICS_MODE mode);

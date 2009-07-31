@@ -80,6 +80,14 @@ bool DGPS::close()
     return true;
 }
 
+bool DGPS::setRTKInputPort(string const& port_name)
+{
+    stringstream aux;
+    aux << "$PASHS,DIF,PRT," << port_name << ",RT3\r\n";
+    write(aux.str(), 1000);
+    return verifyAcknowledge();
+}
+
 string DGPS::read(int timeout)
 {
     char buffer[MAX_PACKET_SIZE];
@@ -87,6 +95,20 @@ string DGPS::read(int timeout)
     return string(buffer, packet_size);
 }
 
+void DGPS::dumpStatus()
+{
+    write("$PASHQ,PAR\r\n", 1000);
+
+    char buffer[256];
+    while(true)
+    {
+        usleep(100000);
+        int count = ::read(getFileDescriptor(), buffer, 256);
+        cout << string(buffer, count);
+        if (count == 0)
+            break;
+    }
+}
 void DGPS::dumpAlmanac()
 {
     write("$PASHQ,ALM\r\n", 1000);
