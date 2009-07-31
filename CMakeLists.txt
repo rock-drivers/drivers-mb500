@@ -30,6 +30,9 @@ TARGET_LINK_LIBRARIES(dgps_base dgps)
 ADD_EXECUTABLE(dgps_rover dgps_rover.cc)
 TARGET_LINK_LIBRARIES(dgps_rover dgps)
 
+ADD_EXECUTABLE(dgps_tool dgps_tool.cc)
+TARGET_LINK_LIBRARIES(dgps_tool dgps)
+
 ADD_EXECUTABLE(dgps_test dgps_test.cc)
 TARGET_LINK_LIBRARIES(dgps_test dgps)
 
