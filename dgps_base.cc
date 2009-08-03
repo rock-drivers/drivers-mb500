@@ -48,7 +48,7 @@ int main (int argc, const char** argv){
         gps.collectPeriodicData();
         if (gps.position.timestamp == gps.errors.timestamp && (gps.position.timestamp > last_update || last_update == DFKI::Time()))
         {
-	    if (first_solution.isNull())
+	    if (gps.position.positionType != gps::NO_SOLUTION && first_solution.isNull())
 	    {
 		first_solution = gps.position.timestamp;
 		cerr << "first solution found, now waiting " << AVERAGING_TIME << " seconds." << endl;
