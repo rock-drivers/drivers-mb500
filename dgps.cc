@@ -55,6 +55,8 @@ bool DGPS::open(const string& filename)
     stopPeriodicData();
     stopRTKBase();
     resetStoredPosition();
+    setReceiverDynamics(ADAPTIVE);
+
     return true;
 }
 
