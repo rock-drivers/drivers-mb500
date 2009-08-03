@@ -53,6 +53,7 @@ bool DGPS::open(const string& filename)
 
     stopPeriodicData();
     stopRTKBase();
+    resetStoredPosition();
     return true;
 }
 
@@ -232,6 +233,18 @@ bool DGPS::setReceiverDynamics(DYNAMICS_MODE setting)
     stringstream aux;
     aux << setting;
     write("$PASHS,DYN," + aux.str() + "\r\n", 1000);
+    return verifyAcknowledge();
+}
+
+bool DGPS::resetStoredPosition()
+{
+    write("$PASHS,POS,MOV\r\n", 1000);
+    return verifyAcknowledge();
+}
+
+bool DGPS::setPositionFromCurrent()
+{
+    write("$PASHS,POS,CUR\r\n", 1000);
     return verifyAcknowledge();
 }
 

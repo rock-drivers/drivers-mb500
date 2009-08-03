@@ -5,7 +5,7 @@ using namespace std;
 
 void usage()
 {
-    cerr << "usage: dgps_tool <device> <cold-reset|warm-reset|status|almanac>" << endl;
+    cerr << "usage: dgps_tool <device> <cold-reset|warm-reset|status|almanac|moving>" << endl;
 }
 
 int main(int argc, char** argv)
@@ -34,6 +34,8 @@ int main(int argc, char** argv)
         gps.dumpStatus();
     else if (command == "almanac")
         gps.dumpAlmanac();
+    else if (command == "moving")
+        gps.resetStoredPosition();
     else
         usage();
 

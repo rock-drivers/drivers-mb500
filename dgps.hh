@@ -74,8 +74,13 @@ class DGPS : public IODriver {
                  */
 		bool setKnownPointInit(double, std::string, double, std::string, double, double, double, double, std::string);
 
+                /** Puts the receiver in moving mode, i.e. resets any stored
+                 * position */
+                bool resetStoredPosition();
 		/** Sets the current receiver position. Required to go into RTK base mode. */
 		bool setPosition(double latitude, double longitude, double height);
+		/** Fixes the receiver position to the currently estimated one */
+		bool setPositionFromCurrent();
 
                 /** Enable/disable GLONASS tracking */
 		bool setGLONASSTracking(bool);
