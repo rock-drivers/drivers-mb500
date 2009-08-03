@@ -27,30 +27,20 @@ int main (int argc, const char** argv){
     if(!gps.open(device_name))
         return 1;
 
-    // gps.reset(true);
-    char const* solutionNames[] = {
-        "NONE",
-        "AUTONOMOUS",
-        "DIFFERENTIAL",
-        "UNUSED",
-        "RTK_FIXED",
-        "RTK_FLOAT"
-    };
-
     if (!gps.setGLONASSTracking(true))
     {
         cerr << "could not enable GLONASS tracking" << endl;
         return 1;
     }
     gps.setPeriodicData(current_port, 1);
-    cout << "DGPS board initialized" << endl;
+    cerr << "DGPS board initialized" << endl;
     char const* fields[12] = {
         "time", "long", "lat", "alt", "dlong", "dlat", "dalt", "sol_type", "sat_count",
         "gps", "sbas", "glonass" };
 
     for (int i = 0; i < 12; ++i)
-        cout << setw(10) << fields[i] << " ";
-    cout << endl;
+        cerr << setw(10) << fields[i] << " ";
+    cerr << endl;
 
     DFKI::Time last_update, first_solution;
     while(true)
@@ -61,36 +51,16 @@ int main (int argc, const char** argv){
 	    if (first_solution.isNull())
 	    {
 		first_solution = gps.position.timestamp;
-		cout << "first solution found, now waiting " << AVERAGING_TIME << " seconds." << endl;
+		cerr << "first solution found, now waiting " << AVERAGING_TIME << " seconds." << endl;
 	    }
 
             last_update = gps.position.timestamp;
-
-	    cout
-		<< setw(10) << gps.position.timestamp.toMilliseconds() << " "
-		<< setw(8) << gps.position.longitude << " "
-		<< setw(8) << gps.position.latitude << " "
-		<< setw(8) << gps.position.altitude << " "
-		<< setw(8) << gps.errors.deviationLongitude << " "
-		<< setw(8) << gps.errors.deviationLatitude << " "
-		<< setw(8) << gps.errors.deviationAltitude << " "
-                << setw(10) << solutionNames[gps.position.positionType] << " "
-                << setw(5) << gps.position.noOfSatellites << " ";
-
-            int sat_count = gps.satellites.size();
-            int counts[3] = { 0, 0, 0 };
-            for (int i = 0; i < sat_count; ++i)
-                counts[gps.satellites[i].getConstellation()]++;
-
-            cout 
-                << setw(5) << counts[0] << " "
-                << setw(5) << counts[1] << " "
-                << setw(5) << counts[2] << endl;
+            DGPS::display(cerr, gps) << endl;
         }
 
 	if (!first_solution.isNull() && (gps.position.timestamp - first_solution) > DFKI::Time(AVERAGING_TIME))
 	{
-	    cout << "now setting base station position" << endl;
+	    cerr << "now setting base station position" << endl;
 	    break;
 	}
     }

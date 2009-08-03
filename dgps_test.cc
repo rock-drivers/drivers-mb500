@@ -21,16 +21,6 @@ int main (int argc, const char** argv){
     if(!gps.open(device_name))
         return 1;
 
-    // gps.reset(true);
-    char const* solutioNames[] = {
-        "NONE",
-        "AUTONOMOUS",
-        "DIFFERENTIAL",
-        "UNUSED",
-        "RTK_FIXED",
-        "RTK_FLOAT"
-    };
-
     if (!gps.setGLONASSTracking(true))
     {
         cerr << "could not enable GLONASS tracking" << endl;
@@ -54,27 +44,8 @@ int main (int argc, const char** argv){
         if (gps.position.timestamp == gps.errors.timestamp && (gps.position.timestamp > last_update || last_update == DFKI::Time()))
         {
             last_update = gps.position.timestamp;
+            DGPS::display(cout, gps.position, gps.errors, gps.satellites) << endl;
 
-	    cout
-		<< setw(10) << gps.position.timestamp.toMilliseconds() << " "
-		<< setw(8) << gps.position.longitude << " "
-		<< setw(8) << gps.position.latitude << " "
-		<< setw(8) << gps.position.altitude << " "
-		<< setw(8) << gps.errors.deviationLongitude << " "
-		<< setw(8) << gps.errors.deviationLatitude << " "
-		<< setw(8) << gps.errors.deviationAltitude << " "
-                << setw(10) << solutioNames[gps.position.positionType] << " "
-                << setw(5) << gps.position.noOfSatellites << " ";
-
-            int sat_count = gps.satellites.size();
-            int counts[3] = { 0, 0, 0 };
-            for (int i = 0; i < sat_count; ++i)
-                counts[gps.satellites[i].getConstellation()]++;
-
-            cout 
-                << setw(5) << counts[0] << " "
-                << setw(5) << counts[1] << " "
-                << setw(5) << counts[2] << endl;
         }
     }
     gps.close();

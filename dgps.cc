@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 
 #include <boost/lexical_cast.hpp>
 
@@ -573,5 +574,50 @@ DFKI::Time DGPS::interpretTime(std::string const& time)
     int s = static_cast<int>(m1) % 10000;
     DFKI::Time result = DFKI::Time(h + m + s / 100, (s % 100) * 10000);
     return result;
+}
+
+char const* solutionNames[] = {
+    "NONE",
+    "AUTONOMOUS",
+    "DIFFERENTIAL",
+    "UNUSED",
+    "RTK_FIXED",
+    "RTK_FLOAT"
+};
+
+
+std::ostream& DGPS::display(std::ostream& io, DGPS const& driver)
+{
+    return display(io, driver.position, driver.errors, driver.satellites);
+}
+
+std::ostream& DGPS::display(std::ostream& io, gps::Position const& pos, gps::Errors const& errors, gps::SatelliteInfo const& satellites)
+{
+    io
+        << setw(10) << pos.timestamp.toMilliseconds() << " "
+        << setw(8) << pos.longitude << " "
+        << setw(8) << pos.latitude << " "
+        << setw(8) << pos.altitude << " "
+        << setw(8) << errors.deviationLongitude << " "
+        << setw(8) << errors.deviationLatitude << " "
+        << setw(8) << errors.deviationAltitude << " "
+        << setw(10) << solutionNames[pos.positionType] << " "
+        << setw(5) << pos.noOfSatellites << " ";
+
+    int sat_count = satellites.size();
+    int counts[3] = { 0, 0, 0 };
+    for (int i = 0; i < sat_count; ++i)
+        counts[satellites[i].getConstellation()]++;
+
+    io 
+        << setw(5) << counts[0] << " "
+        << setw(5) << counts[1] << " "
+        << setw(5) << counts[2];
+
+    //io << "    [" << endl;
+    //for (int i = 0; i < sat_count; ++i)
+    //    io << "       " << satellites[i].PRN << " " << satellites[i].elevation << " " << satellites[i].azimuth << " " << satellites[i].SNR << endl;
+    //io << "     ]";
+    return io;
 }
 

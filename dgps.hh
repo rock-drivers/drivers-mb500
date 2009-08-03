@@ -141,6 +141,11 @@ class DGPS : public IODriver {
 		std::string read(int timeout);
 		void write(const std::string&, int timeout);
 		int extractPacket(uint8_t const* buffer, size_t buffer_size) const;
+
+        public:
+                static std::ostream& display(std::ostream& io, gps::Position const& pos, gps::Errors const& errors, gps::SatelliteInfo const& info);
+                static std::ostream& display(std::ostream& io, DGPS const& driver);
 };
+
 
 #endif
