@@ -32,6 +32,9 @@ int main (int argc, const char** argv){
         cerr << "could not enable GLONASS tracking" << endl;
         return 1;
     }
+    gps.setCodeCorrelatorMode(DGPS::EDGE_CORRELATOR);
+    gps.setReceiverDynamics(DGPS::STATIC);
+
     gps.setPeriodicData(current_port, 1);
     cerr << "DGPS board initialized" << endl;
     char const* fields[12] = {
