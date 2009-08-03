@@ -181,15 +181,15 @@ bool DGPS::setRTKOutputMode(bool setting)
 void DGPS::setRTKBase(string port_name)
 {
     stringstream aux;
-    aux << "$PASHS,RT2,18," << port_name << ",ON\r\n";
-    aux << "$PASHS,RT2,19," << port_name << ",ON\r\n";
-    aux << "$PASHS,RT2,24," << port_name << ",ON,13\r\n";
-    aux << "$PASHS,RT2,23," << port_name << ",ON,31\r\n";
+    // aux << "$PASHS,RT2,18," << port_name << ",ON,1\r\n";
+    // aux << "$PASHS,RT2,19," << port_name << ",ON,1\r\n";
+    // aux << "$PASHS,RT2,24," << port_name << ",ON,13\r\n";
+    // aux << "$PASHS,RT2,23," << port_name << ",ON,31\r\n";
 
-    // aux << "$PASHS,RT3,1004," << port_name << ",ON\r\n";
-    // aux << "$PASHS,RT3,1012," << port_name << ",ON\r\n";
-    // aux << "$PASHS,RT3,1006," << port_name << ",ON,13\r\n";
-    // aux << "$PASHS,RT3,1033," << port_name << ",ON,31\r\n";
+    aux << "$PASHS,RT3,1004," << port_name << ",ON,1\r\n";
+    aux << "$PASHS,RT3,1012," << port_name << ",ON,1\r\n";
+    aux << "$PASHS,RT3,1006," << port_name << ",ON,13\r\n";
+    aux << "$PASHS,RT3,1033," << port_name << ",ON,31\r\n";
     write(aux.str(), 1000);
     for (int i = 0; i < 4; ++i)
 	verifyAcknowledge();
