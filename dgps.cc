@@ -180,21 +180,42 @@ bool DGPS::setRTKOutputMode(bool setting)
     return verifyAcknowledge();
 }
 
-void DGPS::setRTKBase(string port_name)
+int setRTKBaseRTCM2(std::ostream& io, string const& port_name)
+{
+    io << "$PASHS,RT2,18," << port_name << ",ON,1\r\n";
+    io << "$PASHS,RT2,19," << port_name << ",ON,1\r\n";
+    io << "$PASHS,RT2,24," << port_name << ",ON,13\r\n";
+    io << "$PASHS,RT2,23," << port_name << ",ON,31\r\n";
+    return 4;
+}
+int setRTKBaseRTCM3(std::ostream& io, string const& port_name)
+{
+    io << "$PASHS,RT3,1004," << port_name << ",ON,1\r\n";
+    io << "$PASHS,RT3,1012," << port_name << ",ON,1\r\n";
+    io << "$PASHS,RT3,1006," << port_name << ",ON,13\r\n";
+    io << "$PASHS,RT3,1033," << port_name << ",ON,31\r\n";
+    return 4;
+}
+int setRTKBaseATOM(std::ostream& io, string const& port_name)
+{
+    io << "$PASHS,ATM,COR," << port_name << ",ON,0.2\r\n";
+    io << "$PASHS,ATM,MES," << port_name << ",ON,0.2\r\n";
+    io << "$PASHS,ATM,PVT," << port_name << ",ON,13\r\n";
+    io << "$PASHS,ATM,ATR," << port_name << ",ON,31\r\n";
+    return 4;
+}
+
+bool DGPS::setRTKBase(string port_name)
 {
     stringstream aux;
-    // aux << "$PASHS,RT2,18," << port_name << ",ON,1\r\n";
-    // aux << "$PASHS,RT2,19," << port_name << ",ON,1\r\n";
-    // aux << "$PASHS,RT2,24," << port_name << ",ON,13\r\n";
-    // aux << "$PASHS,RT2,23," << port_name << ",ON,31\r\n";
-
-    aux << "$PASHS,RT3,1004," << port_name << ",ON,1\r\n";
-    aux << "$PASHS,RT3,1012," << port_name << ",ON,1\r\n";
-    aux << "$PASHS,RT3,1006," << port_name << ",ON,13\r\n";
-    aux << "$PASHS,RT3,1033," << port_name << ",ON,31\r\n";
+    int count = setRTKBaseRTCM3(aux, port_name);
     write(aux.str(), 1000);
-    for (int i = 0; i < 4; ++i)
-	verifyAcknowledge();
+    for (int i = 0; i < count; ++i)
+    {
+        if (!  verifyAcknowledge())
+            return false;
+    }
+    return true;
 }
 
 void DGPS::stopRTKBase()

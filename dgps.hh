@@ -19,7 +19,7 @@ class DGPS : public IODriver {
 		bool close();
 
 		/** Make the base output RTCM 3.0 correction messages on the provided port */
-		void setRTKBase(std::string port_name);
+		bool setRTKBase(std::string port_name);
 		/** Stop the output of any RTCM 3.0 messages */
 		void stopRTKBase();
                 /** Enables or disables RTK output */
