@@ -10,6 +10,7 @@
 
 using namespace std;
 
+static const int AVERAGING_SAMPLING = 1;
 static const int AVERAGING_TIME = 10;
 int main (int argc, const char** argv){
     DGPS gps;
@@ -32,10 +33,18 @@ int main (int argc, const char** argv){
         cerr << "could not enable GLONASS tracking" << endl;
         return 1;
     }
-    gps.setCodeCorrelatorMode(DGPS::EDGE_CORRELATOR);
-    gps.setReceiverDynamics(DGPS::STATIC);
+    if (!gps.setCodeCorrelatorMode(DGPS::STROBE_CORRELATOR))
+    {
+        cerr << "could not set the code correlator" << endl;
+        return 1;
+    }
+    if (!gps.setReceiverDynamics(DGPS::STATIC))
+    {
+        cerr << "could not set the receiver dynamics" << endl;
+        return 1;
+    }
 
-    gps.setPeriodicData(current_port, 1);
+    gps.setPeriodicData(current_port, AVERAGING_SAMPLING);
     cerr << "DGPS board initialized" << endl;
     char const* fields[12] = {
         "time", "long", "lat", "alt", "dlong", "dlat", "dalt", "sol_type", "sat_count",
