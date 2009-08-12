@@ -23,7 +23,7 @@
 using namespace std;
 using namespace gps;
 
-DGPS::DGPS() : IODriver(2048)
+DGPS::DGPS() : IODriver(2048), m_period(1000)
 {
 }
 
@@ -344,15 +344,16 @@ bool DGPS::setNMEA(string command, string port, bool onOff, double outputRate)
 
 bool DGPS::setPeriodicData(std::string const& port, double period)
 {
-    if(! setNMEA("GGA", port, true, 1)) return 0;
-    if(! setNMEA("GST", port, true, 1)) return 0;
-    if(! setNMEA("GSV", port, true, 1)) return 0;
+    m_period = period * 1000;
+    if(! setNMEA("GGA", port, true, period)) return 0;
+    if(! setNMEA("GST", port, true, period)) return 0;
+    if(! setNMEA("GSV", port, true, period)) return 0;
     return 1;
 }
 
 void DGPS::collectPeriodicData()
 {
-    string message = read(1500);
+    string message = read(m_period * 1.2);
 
     if( message.find("$GPGGA,") == 0 )
         this->position = interpretInfo(message);
