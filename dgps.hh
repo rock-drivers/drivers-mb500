@@ -131,6 +131,7 @@ class DGPS : public IODriver {
 		gps::SatelliteInfo satellites;
 
 	protected:
+                float m_period;
 		gps::SatelliteInfo tempSatellites;
 
 		static gps::Errors interpretErrors(std::string const& msg);
