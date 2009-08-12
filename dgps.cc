@@ -173,7 +173,7 @@ int DGPS::extractPacket(uint8_t const* buffer, size_t buffer_size) const {
     return -buffer_size;
 }
 
-bool DGPS::setRTKOutputMode(bool setting)
+bool DGPS::setFastRTK(bool setting)
 {
     if(setting) write("$PASHS,CPD,FST,ON\r\n", 1000);
     else write("$PASHS,CPD,FST,OFF\r\n", 1000);

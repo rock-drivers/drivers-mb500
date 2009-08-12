@@ -40,12 +40,16 @@ int main (int argc, const char** argv){
         cerr << "could not enable GLONASS tracking" << endl;
         return 1;
     }
+    if (!gps.setFastRTK(false))
+    {
+        cerr << "could not disable fast RTK" << endl;
+        return 1;
+    }
     if (!gps.setRTKInputPort(port_name))
     {
         cerr << "could not setup correction input" << endl;
         return 1;
     }
-    gps.setRTKOutputMode(false);
     gps.setPeriodicData(port_name, 1);
     cout << "DGPS board initialized" << endl;
     char const* fields[12] = {

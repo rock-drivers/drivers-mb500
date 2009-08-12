@@ -22,8 +22,8 @@ class DGPS : public IODriver {
 		bool setRTKBase(std::string port_name);
 		/** Stop the output of any RTCM 3.0 messages */
 		void stopRTKBase();
-                /** Enables or disables RTK output */
-		bool setRTKOutputMode(bool enable);
+                /** Enables or disables Fast-RTK */
+		bool setFastRTK(bool enable);
                 /** Resets the RTK filter */
 		bool setRTKReset(); 
                 /** Sets the port on which the RTK corrections will be received
