@@ -272,13 +272,20 @@ bool DGPS::setPositionFromCurrent()
     return verifyAcknowledge();
 }
 
+static double deg2magellan(double value)
+{
+    double deg     = static_cast<int>(value);
+    double decimal = value - deg;
+    return deg * 100 + decimal * 60;
+}
+
 bool DGPS::setPosition(double latitude, double longitude, double height)
 {
     stringstream aux;
     aux << "$PASHS,POS,"
-	<< fabs(latitude) << "," << (latitude > 0 ? 'N' : 'S') << ","
-	<< fabs(longitude) << "," << (longitude > 0 ? 'W' : 'E') << ","
-	<< height
+	<< setprecision(7) << fixed << deg2magellan(fabs(latitude))  << "," << (latitude > 0 ? 'N' : 'S') << ","
+	<< setprecision(7) << fixed << deg2magellan(fabs(longitude)) << "," << (longitude > 0 ? 'W' : 'E') << ","
+	<< setprecision(4) << fixed << height
 	<< "\r\n";
     write(aux.str(), 1000);
     return verifyAcknowledge();
@@ -554,12 +561,16 @@ Position DGPS::interpretInfo(string const& result)
 
     int pos2 = result.find_first_of(",", pos+1);
     data.latitude = atof( string(result, pos+1, pos2-pos-1).c_str());
+    double minutes = fmod(data.latitude, 100);
+    data.latitude = static_cast<int>(data.latitude / 100) + minutes / 60.0;
 
     pos = result.find_first_of(",", pos2+1);
     if (result[pos2 + 1] == 'S') data.latitude = -data.latitude;
 
     pos2 = result.find_first_of(",", pos+1);
     data.longitude = atof( string(result, pos+1, pos2 - pos - 1).c_str());
+    minutes = fmod(data.longitude, 100);
+    data.longitude = static_cast<int>(data.longitude / 100) + minutes / 60.0;
 
     pos = result.find_first_of(",", pos2+1);
     if (result[pos2 + 1] == 'W') data.longitude = -data.longitude;
@@ -619,12 +630,12 @@ std::ostream& DGPS::display(std::ostream& io, gps::Position const& pos, gps::Err
 {
     io
         << setw(10) << pos.timestamp.toMilliseconds() << " "
-        << setw(8) << pos.longitude << " "
-        << setw(8) << pos.latitude << " "
-        << setw(8) << pos.altitude << " "
-        << setw(8) << errors.deviationLongitude << " "
-        << setw(8) << errors.deviationLatitude << " "
-        << setw(8) << errors.deviationAltitude << " "
+        << setprecision(10) << fixed << setw(15) << pos.longitude << " "
+        << setw(15) << pos.latitude << " "
+        << setprecision(2) << setw(8) << pos.altitude << " "
+        << setprecision(3) << setw(8) << errors.deviationLongitude << " "
+        << setprecision(3) << setw(8) << errors.deviationLatitude << " "
+        << setprecision(3) << setw(8) << errors.deviationAltitude << " "
         << setw(10) << solutionNames[pos.positionType] << " "
         << setw(5) << pos.noOfSatellites << " ";
 
