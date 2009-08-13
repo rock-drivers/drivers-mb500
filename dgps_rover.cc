@@ -92,12 +92,14 @@ int main (int argc, const char** argv){
 
     if (correction_source.size() != 1 || correction_source.find_first_of("ABC") != 0)
     {
+        cerr << "reading correction data from UDP port " << correction_source << endl;
         correction_socket = openSocket(correction_source);
         guard_socket.reset(new file_guard(correction_socket));
         correction_input_port = port_name;
     }
     else
     {
+        cerr << "correction data will be sent to the board's port " << correction_source << endl;
         if (port_name == correction_source)
         {
             std::cerr << "you cannot use the same port for port_name and correction_source" << std::endl;
