@@ -34,8 +34,13 @@ int main(int argc, char** argv)
         gps.dumpStatus();
     else if (command == "almanac")
         gps.dumpAlmanac();
+    else if (command == "satellites")
+        gps.dumpSatellites();
     else if (command == "moving")
+    {
         gps.resetStoredPosition();
+        gps.setReceiverDynamics(DGPS::ADAPTIVE);
+    }
     else
         usage();
 

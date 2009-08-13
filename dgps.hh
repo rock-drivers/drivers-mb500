@@ -69,6 +69,8 @@ class DGPS : public IODriver {
                  */
                 void dumpStatus();
 
+                void dumpSatellites();
+
                 /** Select the type of receiver motion */
 		bool setReceiverDynamics(DYNAMICS_MODE mode);
 
