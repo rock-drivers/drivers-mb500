@@ -130,6 +130,7 @@ class DGPS : public IODriver {
 		gps::Errors   errors;
 		gps::SatelliteInfo satellites;
 
+		void writeCorrectionData(char const* data, size_t size, int timeout);
 	protected:
                 float m_period;
 		gps::SatelliteInfo tempSatellites;

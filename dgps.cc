@@ -126,6 +126,15 @@ void DGPS::dumpAlmanac()
     }
 }
 
+void DGPS::writeCorrectionData(char const* data, size_t size, int timeout)
+{
+    try {
+        IODriver::writePacket(reinterpret_cast <uint8_t const*>(data), size, timeout);
+    }
+    catch(...)
+    { throw std::runtime_error("dgps/mb500: error writing correction data"); }
+}
+
 void DGPS::write(const string& command, int timeout)
 {
     size_t cmd_size = command.length();
