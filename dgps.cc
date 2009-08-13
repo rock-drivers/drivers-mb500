@@ -562,7 +562,7 @@ bool DGPS::interpretSatelliteInfo(SatelliteInfo& data, string const& result)
     if (msg_number != msg_count)
         field_count = 4;
     else
-        field_count = sat_count % 4;
+        field_count = sat_count % 5;
 
     Satellite sat;
     for(int i=0; i<field_count; ++i) {
