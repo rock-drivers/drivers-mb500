@@ -10,6 +10,8 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+#include <memory>
+
 using namespace std;
 
 int openSocket(std::string const& port)
@@ -60,20 +62,51 @@ int openSocket(std::string const& port)
     return sfd;
 }
 
+void usage()
+{
+    cerr << "usage: dgps_rover device_name port_name correction_source" << endl;
+    cerr << "  where correction_source is either a port number or a\n"
+        "  Magellan port name. In the first case, corrections are\n"
+        "  expected as UDP packets sent to the given port, and\n"
+        "  are sent to the command port port_name. In the second\n"
+        "  case, corrections are expected on the given board port,\n"
+        "  which has to be different than port_name" << endl;
+}
+
 int main (int argc, const char** argv){
     DGPS gps;
 
     if (argc != 4)
     {
-        cerr << "usage: dgps_test device_name port_name correction_port" << endl;
+        usage();
         return 1;
     }
 
     string device_name = argv[1];
     string port_name   = argv[2];
+    string correction_source = argv[3];
 
-    int correction_socket = openSocket(argv[3]);
-    file_guard guard_socket(correction_socket);
+    int correction_socket = -1;
+    string correction_input_port;
+    std::auto_ptr<file_guard> guard_socket;
+
+    if (correction_source.size() != 1 || correction_source.find_first_of("ABC") != 0)
+    {
+        correction_socket = openSocket(correction_source);
+        guard_socket.reset(new file_guard(correction_socket));
+        correction_input_port = port_name;
+    }
+    else
+    {
+        if (port_name == correction_source)
+        {
+            std::cerr << "you cannot use the same port for port_name and correction_source" << std::endl;
+            usage();
+            return 1;
+        }
+
+        correction_input_port = correction_source;
+    }
 
     if(!gps.openRover(device_name))
         return 1;
@@ -93,7 +126,7 @@ int main (int argc, const char** argv){
         cerr << "could not set code correlator" << endl;
         return 1;
     }
-    if (!gps.setRTKInputPort(port_name))
+    if (!gps.setRTKInputPort(correction_input_port))
     {
         cerr << "could not setup correction input" << endl;
         return 1;
@@ -116,7 +149,8 @@ int main (int argc, const char** argv){
     {
         fd_set fds;
         FD_ZERO(&fds);
-        FD_SET(correction_socket, &fds);
+        if (correction_socket != -1)
+            FD_SET(correction_socket, &fds);
         FD_SET(gps.getFileDescriptor(), &fds);
         int ret = select(std::max(correction_socket, gps.getFileDescriptor()) + 1, &fds, NULL, NULL, NULL);
         if (ret < 0)
@@ -127,7 +161,7 @@ int main (int argc, const char** argv){
         else if (ret == 0)
             cerr << "zero return value" << endl;
         
-        if (FD_ISSET(correction_socket, &fds))
+        if (correction_socket != -1 && FD_ISSET(correction_socket, &fds))
         {
             int rd = recv(correction_socket, buffer, 1024, 0);
             if (rd > 0)
