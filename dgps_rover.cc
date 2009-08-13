@@ -75,7 +75,7 @@ int main (int argc, const char** argv){
     int correction_socket = openSocket(argv[3]);
     file_guard guard_socket(correction_socket);
 
-    if(!gps.open(device_name))
+    if(!gps.openRover(device_name))
         return 1;
 
     if (!gps.setGLONASSTracking(true))

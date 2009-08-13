@@ -55,9 +55,24 @@ bool DGPS::open(const string& filename)
     stopPeriodicData();
     stopRTKBase();
     resetStoredPosition();
-    setReceiverDynamics(ADAPTIVE);
 
     return true;
+}
+
+bool DGPS::openBase(std::string const& device_name)
+{
+    if (!open(device_name))
+        return false;
+
+    return setReceiverDynamics(STATIC);
+}
+
+bool DGPS::openRover(std::string const& device_name)
+{
+    if (!open(device_name))
+        return false;
+
+    return setReceiverDynamics(ADAPTIVE);
 }
 
 void DGPS::reset(bool cold_start)

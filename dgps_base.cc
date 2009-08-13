@@ -96,7 +96,7 @@ int main (int argc, const char** argv){
         cerr << "outputting correction data to " << target_host << ":" << target_port << endl;
     }
 
-    if(!gps.open(device_name))
+    if(!gps.openBase(device_name))
         return 1;
 
     if (!gps.setGLONASSTracking(true))

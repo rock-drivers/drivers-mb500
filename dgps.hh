@@ -16,6 +16,10 @@ class DGPS : public IODriver {
 		~DGPS();
 
 		bool open(const std::string& device_name);
+
+                bool openBase(const std::string& device_name);
+                bool openRover(const std::string& device_name);
+
 		bool close();
 
 		/** Make the base output RTCM 3.0 correction messages on the provided port */
