@@ -626,6 +626,7 @@ char const* solutionNames[] = {
     "RTK_FIXED",
     "RTK_FLOAT"
 };
+static const int MAX_SOLUTION_ID = 5;
 
 
 std::ostream& DGPS::display(std::ostream& io, DGPS const& driver)
@@ -642,9 +643,14 @@ std::ostream& DGPS::display(std::ostream& io, gps::Position const& pos, gps::Err
         << setprecision(2) << setw(8) << pos.altitude << " "
         << setprecision(3) << setw(8) << errors.deviationLongitude << " "
         << setprecision(3) << setw(8) << errors.deviationLatitude << " "
-        << setprecision(3) << setw(8) << errors.deviationAltitude << " "
-        << setw(10) << solutionNames[pos.positionType] << " "
-        << setw(5) << pos.noOfSatellites << " ";
+        << setprecision(3) << setw(8) << errors.deviationAltitude << " ";
+
+    if (pos.positionType > MAX_SOLUTION_ID)
+        io << setw(10) << "UNDEFINED=" << (int)pos.positionType << " ";
+    else
+        io << setw(10) << solutionNames[pos.positionType] << " ";
+
+    io << setw(5) << pos.noOfSatellites << " ";
 
     int sat_count = satellites.size();
     int counts[3] = { 0, 0, 0 };
@@ -654,12 +660,11 @@ std::ostream& DGPS::display(std::ostream& io, gps::Position const& pos, gps::Err
     io 
         << setw(5) << counts[0] << " "
         << setw(5) << counts[1] << " "
-        << setw(5) << counts[2];
+        << setw(5) << counts[2] << " "
+        << setw(5);
 
-    //io << "    [" << endl;
-    //for (int i = 0; i < sat_count; ++i)
-    //    io << "       " << satellites[i].PRN << " " << satellites[i].elevation << " " << satellites[i].azimuth << " " << satellites[i].SNR << endl;
-    //io << "     ]";
+    io << pos.ageOfDifferentialCorrections;
+
     return io;
 }
 
