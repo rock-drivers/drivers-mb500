@@ -104,7 +104,7 @@ int main (int argc, const char** argv){
         cerr << "could not enable GLONASS tracking" << endl;
         return 1;
     }
-    if (!gps.setCodeCorrelatorMode(DGPS::STROBE_CORRELATOR))
+    if (!gps.setCodeCorrelatorMode(DGPS::EDGE_CORRELATOR))
     {
         cerr << "could not set the code correlator" << endl;
         return 1;
