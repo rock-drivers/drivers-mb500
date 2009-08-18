@@ -147,6 +147,7 @@ int main (int argc, const char** argv){
 
     char buffer[1024];
     int diff_count = 0;
+    int seq = 0;
     while(true)
     {
         fd_set fds;
@@ -182,7 +183,9 @@ int main (int argc, const char** argv){
             gps.collectPeriodicData();
             if (gps.position.timestamp == gps.errors.timestamp && (gps.position.timestamp > last_update || last_update == DFKI::Time()))
             {
+                ++seq;
                 last_update = gps.position.timestamp;
+                cout << seq << " ";
                 DGPS::display(cout, gps) << " " << diff_count << endl;
                 diff_count = 0;
             }
