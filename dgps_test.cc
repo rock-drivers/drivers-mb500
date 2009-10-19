@@ -40,13 +40,16 @@ int main (int argc, const char** argv){
 
     while(true)
     {
-        gps.collectPeriodicData();
-        if (gps.position.timestamp == gps.errors.timestamp && (gps.position.timestamp > last_update || last_update == DFKI::Time()))
-        {
-            last_update = gps.position.timestamp;
-            DGPS::display(cout, gps.position, gps.errors, gps.satellites) << endl;
+	try {
+		gps.collectPeriodicData();
+		if (gps.position.timestamp == gps.errors.timestamp && (gps.position.timestamp > last_update || last_update == DFKI::Time()))
+		{
+		    last_update = gps.position.timestamp;
+		    DGPS::display(cout, gps.position, gps.errors, gps.satellites) << endl;
 
-        }
+		}
+	} 
+        catch(timeout_error) {}
     }
     gps.close();
 

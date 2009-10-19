@@ -180,15 +180,18 @@ int main (int argc, const char** argv){
 
         if (FD_ISSET(gps.getFileDescriptor(), &fds))
         {
-            gps.collectPeriodicData();
-            if (gps.position.timestamp == gps.errors.timestamp && (gps.position.timestamp > last_update || last_update == DFKI::Time()))
-            {
-                ++seq;
-                last_update = gps.position.timestamp;
-                cout << seq << " ";
-                DGPS::display(cout, gps) << " " << diff_count << endl;
-                diff_count = 0;
+            try {
+                gps.collectPeriodicData();
+                if (gps.position.timestamp == gps.errors.timestamp && (gps.position.timestamp > last_update || last_update == DFKI::Time()))
+                {
+                    ++seq;
+                    last_update = gps.position.timestamp;
+                    cout << seq << " ";
+                    DGPS::display(cout, gps) << " " << diff_count << endl;
+                    diff_count = 0;
+                }
             }
+            catch(timeout_error) {}
         }
     }
     gps.close();
