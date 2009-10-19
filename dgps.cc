@@ -143,8 +143,13 @@ void DGPS::dumpAlmanac()
 
 void DGPS::dumpSatellites()
 {
-    write("$PASHQ,SAT\r\n", 1000);
-    std::cerr << read(1000) << std::endl;
+    write("$PASHQ,GSV\r\n", 1000);
+    try
+    {
+        while(true) {
+            std::cerr << read(10000) << std::endl;
+        }
+    } catch(std::runtime_error) {}
 }
 
 void DGPS::writeCorrectionData(char const* data, size_t size, int timeout)
