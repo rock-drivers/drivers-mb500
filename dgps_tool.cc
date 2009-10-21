@@ -5,7 +5,7 @@ using namespace std;
 
 void usage()
 {
-    cerr << "usage: dgps_tool <device> <cold-reset|warm-reset|status|almanac|moving>" << endl;
+    cerr << "usage: dgps_tool <device> <cold-reset|warm-reset|status|almanac|moving|satellites|edge|strobe>" << endl;
 }
 
 int main(int argc, char** argv)
@@ -36,6 +36,10 @@ int main(int argc, char** argv)
         gps.dumpAlmanac();
     else if (command == "satellites")
         gps.dumpSatellites();
+    else if (command == "edge")
+        gps.setCodeCorrelatorMode(DGPS::EDGE_CORRELATOR);
+    else if (command == "strobe")
+        gps.setCodeCorrelatorMode(DGPS::STROBE_CORRELATOR);
     else if (command == "moving")
     {
         gps.resetStoredPosition();
