@@ -113,19 +113,9 @@ int main (int argc, const char** argv){
     if(!gps.openRover(device_name))
         return 1;
 
-    if (!gps.setGLONASSTracking(true))
-    {
-        cerr << "could not enable GLONASS tracking" << endl;
-        return 1;
-    }
     if (!gps.setFastRTK(false))
     {
         cerr << "could not disable fast RTK" << endl;
-        return 1;
-    }
-    if (!gps.setCodeCorrelatorMode(DGPS::STROBE_CORRELATOR))
-    {
-        cerr << "could not set code correlator" << endl;
         return 1;
     }
     if (!gps.setRTKInputPort(correction_input_port))

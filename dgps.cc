@@ -55,6 +55,8 @@ bool DGPS::open(const string& filename)
     stopPeriodicData();
     stopRTKBase();
     resetStoredPosition();
+    setGLONASSTracking(true);
+    setCodeCorrelatorMode(STROBE_CORRELATOR);
 
     return true;
 }
