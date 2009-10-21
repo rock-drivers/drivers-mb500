@@ -418,23 +418,22 @@ bool DGPS::setPeriodicData(std::string const& port, double period)
 
 void DGPS::collectPeriodicData()
 {
-    string message = read(m_period * 1.2);
-    while (true)
-    {
-        if( message.find("$GPGGA,") == 0 )
-            this->position = interpretInfo(message);
-        else if( message.find("$PASHR,VEC,") == 0 )
-            cerr << message << endl;
-        else if( message.find("$GPGST,") == 0 || message.find("$GLGST,") == 0 || message.find("$GNGST,") == 0)
-            this->errors = interpretErrors(message);
-        else if( message.find("$GPGSV,") == 0 || message.find("$GLGSV,") == 0)
-        {
-            if (interpretSatelliteInfo(tempSatellites, message))
-                satellites = tempSatellites;
-        }
+    string message;
+    try { message = read(100); }
+    catch(timeout_error)
+    { return; }
 
-        try { message = read(20); }
-        catch(timeout_error) { return; }
+    cerr << "got " << message << endl;
+    if( message.find("$GPGGA,") == 0 )
+        this->position = interpretInfo(message);
+    else if( message.find("$PASHR,VEC,") == 0 )
+        cerr << message << endl;
+    else if( message.find("$GPGST,") == 0 || message.find("$GLGST,") == 0 || message.find("$GNGST,") == 0)
+        this->errors = interpretErrors(message);
+    else if( message.find("$GPGSV,") == 0 || message.find("$GLGSV,") == 0)
+    {
+        if (interpretSatelliteInfo(tempSatellites, message))
+            satellites = tempSatellites;
     }
 }
 
