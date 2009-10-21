@@ -186,12 +186,12 @@ int DGPS::extractPacket(uint8_t const* buffer, size_t buffer_size) const {
 
                 // Minimal message is $*FF\r\n
                 if (i < 5)
-                    return -i;
+                    return -(i + 1);
                 else if (buffer[i - 4] != '*')
-                    return -i;
+                    return -(i + 1);
 
                 // TODO: verify the checksum
-                return i;
+                return i + 1;
             }
             else if (buffer[i] == '$')
             {
