@@ -13,8 +13,9 @@ namespace gps {
         NO_SOLUTION  = 0,
         AUTONOMOUS   = 1,
         DIFFERENTIAL = 2,
-        RTK_FIXED    = 3,
-        RTK_FLOAT    = 4
+        UNUSED       = 3,
+        RTK_FIXED    = 4,
+        RTK_FLOAT    = 5
     };
 
     enum FIRMWARE_OPTIONS
