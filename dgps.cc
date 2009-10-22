@@ -423,7 +423,6 @@ void DGPS::collectPeriodicData()
     catch(timeout_error)
     { return; }
 
-    cerr << "got " << message << endl;
     if( message.find("$GPGGA,") == 0 )
         this->position = interpretInfo(message);
     else if( message.find("$PASHR,VEC,") == 0 )
