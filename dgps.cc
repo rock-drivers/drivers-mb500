@@ -688,10 +688,11 @@ std::ostream& DGPS::display(std::ostream& io, DGPS const& driver)
 std::ostream& DGPS::display(std::ostream& io, gps::Position const& pos, gps::Errors const& errors, gps::SatelliteInfo const& satellites)
 {
     time_t time_secs = pos.timestamp.toSeconds();
-    time_t time_msecs = pos.timestamp.toMilliseconds();
+    int time_msecs = pos.timestamp.microseconds / 1000;
 
+    char* time_string = ctime(&time_secs);
     io
-        << setw(10) << ctime(&time_secs) << "." << setw(3) << time_msecs << " "
+        << setw(10) << string(time_string, time_string + strlen(time_string) - 1) << "." << setw(3) << time_msecs << " "
         << setprecision(10) << fixed << setw(15) << pos.longitude << " "
         << setw(15) << pos.latitude << " "
         << setprecision(2) << setw(8) << pos.altitude << " "
