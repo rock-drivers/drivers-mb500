@@ -5,7 +5,7 @@
 #include <vector>
 #endif
 
-#include <dfki/base_types.h>
+#include <dfki/time.h>
 
 namespace gps {
     enum GPS_SOLUTION_TYPES
