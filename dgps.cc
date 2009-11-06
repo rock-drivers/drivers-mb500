@@ -228,10 +228,10 @@ int setRTKBaseRTCM2(std::ostream& io, string const& port_name)
 }
 int setRTKBaseRTCM3(std::ostream& io, string const& port_name)
 {
-    io << "$PASHS,RT3,1004," << port_name << ",ON,1\r\n";
-    io << "$PASHS,RT3,1012," << port_name << ",ON,1\r\n";
-    io << "$PASHS,RT3,1006," << port_name << ",ON,13\r\n";
-    io << "$PASHS,RT3,1033," << port_name << ",ON,31\r\n";
+    io << "$PASHS,RT3,1004," << port_name << ",ON,0.5\r\n";
+    io << "$PASHS,RT3,1012," << port_name << ",ON,0.5\r\n";
+    io << "$PASHS,RT3,1006," << port_name << ",ON,5\r\n";
+    io << "$PASHS,RT3,1033," << port_name << ",ON,10\r\n";
     return 4;
 }
 int setRTKBaseATOM(std::ostream& io, string const& port_name)
