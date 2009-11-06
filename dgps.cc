@@ -648,11 +648,23 @@ Position DGPS::interpretInfo(string const& result)
 
 DFKI::Time DGPS::interpretTime(std::string const& time)
 {
-    int m1 = atof(time.c_str()) * 100;
-    int h = static_cast<int>(m1 / 1000000) * 3600;
-    int m = static_cast<int>(m1 / 10000) % 100 * 60;
-    int s = static_cast<int>(m1) % 10000;
-    DFKI::Time result = DFKI::Time(h + m + s / 100, (s % 100) * 10000);
+    float gps_time   = atof(time.c_str());
+    int integer_part = gps_time;
+    int microsecs = (gps_time - integer_part) * 1000000;
+
+    // Get current UTC time broken down in day, h, m, s
+    time_t utc_epoch = ::time(NULL);
+    tm utc_hms;
+    gmtime_r(&utc_epoch, &utc_hms);
+
+    // Replace hours minutes and seconds by the GPS values
+    utc_hms.tm_hour = integer_part / 10000;
+    utc_hms.tm_min  = (integer_part / 100) % 100;
+    utc_hms.tm_sec  = (integer_part % 100);
+
+    // And convert it back to seconds since epoch
+    time_t gps_epoch = timegm(&utc_hms);
+    DFKI::Time result = DFKI::Time(gps_epoch, microsecs);
     return result;
 }
 
@@ -674,8 +686,11 @@ std::ostream& DGPS::display(std::ostream& io, DGPS const& driver)
 
 std::ostream& DGPS::display(std::ostream& io, gps::Position const& pos, gps::Errors const& errors, gps::SatelliteInfo const& satellites)
 {
+    time_t time_secs = pos.timestamp.toSeconds();
+    time_t time_msecs = pos.timestamp.toMilliseconds();
+
     io
-        << setw(10) << pos.timestamp.toMilliseconds() << " "
+        << setw(10) << ctime(&time_secs) << "." << setw(3) << time_msecs << " "
         << setprecision(10) << fixed << setw(15) << pos.longitude << " "
         << setw(15) << pos.latitude << " "
         << setprecision(2) << setw(8) << pos.altitude << " "
