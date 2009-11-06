@@ -120,14 +120,15 @@ void DGPS::dumpStatus()
 {
     write("$PASHQ,PAR\r\n", 1000);
 
-    char buffer[256];
+    char buffer[1024];
     while(true)
     {
-        usleep(100000);
-        int count = ::read(getFileDescriptor(), buffer, 256);
-        cout << string(buffer, count);
-        if (count == 0)
-            break;
+	usleep(100000);
+	int rd = ::read(getFileDescriptor(), buffer, 1024);
+	if (rd == -1)
+	    break;
+	if (rd > 0)
+	    cout << string(buffer, rd);
     }
 }
 void DGPS::dumpAlmanac()
