@@ -13,7 +13,7 @@ namespace gps {
         NO_SOLUTION  = 0,
         AUTONOMOUS   = 1,
         DIFFERENTIAL = 2,
-        UNUSED       = 3,
+        INVALID      = 3,
         RTK_FIXED    = 4,
         RTK_FLOAT    = 5
     };

@@ -618,7 +618,10 @@ Position DGPS::interpretInfo(string const& result)
     if (result[pos2 + 1] == 'W') data.longitude = -data.longitude;
 
     pos2 = result.find_first_of(",", pos+1);
-    data.positionType = static_cast<GPS_SOLUTION_TYPES>(atoi( string(result, pos+1, pos2 - pos - 1).c_str()));
+    int position_type = atoi( string(result, pos+1, pos2 - pos - 1).c_str());
+    if (position_type < 0 || position_type > 5)
+        position_type = INVALID;
+    data.positionType = static_cast<GPS_SOLUTION_TYPES>(position_type);
 
     pos = result.find_first_of(",", pos2+1);
     data.noOfSatellites = atoi( string(result, pos2+1, pos - pos2 - 1).c_str());
