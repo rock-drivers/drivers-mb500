@@ -57,12 +57,12 @@ int openSocket(std::string const& hostname, std::string const& port)
     return sfd;
 }
 
-static const int AVERAGING_TIME     = 2;
+static const int AVERAGING_TIME     = 10;
 static const int AVERAGING_SAMPLING = 1;
 int main (int argc, const char** argv){
     DGPS gps;
 
-    if (argc != 5)
+    if (argc != 4 && argc != 5)
     {
         cerr << "usage: dgps_test device_name port target_host target_port" << endl;
         return 1;
@@ -71,7 +71,6 @@ int main (int argc, const char** argv){
     string device_name     = argv[1];
     string current_port    = argv[2];
     string target_host     = argv[3];
-    string target_port     = argv[4];
 
     struct stat file_stat;
     int diff_io = -1;
@@ -82,11 +81,13 @@ int main (int argc, const char** argv){
     }
     else if (stat(target_host.c_str(), &file_stat) != -1)
     {
+	string target_port     = argv[4];
         diff_io = IODriver::openSerialIO(target_host, boost::lexical_cast<int>(target_port));
         cerr << "outputting correction data to serial port " << target_host << ", baud rate is " << target_port << endl;
     }
     else
     {
+	string target_port     = argv[4];
         diff_io = openSocket(target_host, target_port);
         if (diff_io == -1)
         {
@@ -156,22 +157,39 @@ int main (int argc, const char** argv){
     gps.setRTKBase(current_port);
     char buffer[1024];
 
+    last_update = DFKI::Time::now();
+    DFKI::Time start = DFKI::Time::now();
+    int bytes_tx = 0;
     while(true)
     {
 	int rd = read(gps.getFileDescriptor(), buffer, 1024);
         if (rd > 0)
         {
-            int written = write(diff_io, buffer, rd);
-            if (written == -1)
-            {
-                // if ECONNREFUSED, there's nobody at the other end
-                if (errno != ECONNREFUSED)
-                    cerr << "error during write: " << strerror(errno) << endl;
-            }
-            else if (written != rd)
-                cerr << "partial write ! (written " << written << ", needed " << rd << ")" << endl;
-            else
-                cerr << "written " << rd << " bytes" << endl;
+	    int written = 0;
+	    while( written < rd )
+	    {
+		int res = write(diff_io, buffer + written, rd - written);
+		if (res == -1)
+		{
+		    // if ECONNREFUSED, there's nobody at the other end
+		    if (errno != ECONNREFUSED && errno != EAGAIN) {
+			cerr << "error during write: " << strerror(errno) << endl;
+		    	break;
+		    }
+		}
+		else
+		    written += res;
+	    }
+
+	    bytes_tx += rd;
+	    DFKI::Time now = DFKI::Time::now();
+	    float duration = (now - last_update).toSeconds();
+	    if (duration > 1)
+	    {
+		cerr << (bytes_tx / duration) << " b/s" << endl;
+		bytes_tx = 0;
+		last_update = now;
+	    }
         }
         usleep(50000);
     }
