@@ -1,0 +1,12 @@
+<package>
+  <description brief="driver for the Magellan MB500 dGPS board">
+  </description>
+  <author>Sylvain Joyeux/sylvain.joyeux@dfki.de</author>
+  <copyright>
+      DFKI/robotik@dfki.de
+  </copyright>
+  <license>GPL v2 or later</license>
+
+  <depend package="base" />
+  <depend package="drivers/iodrivers_base" />
+</package>
