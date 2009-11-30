@@ -151,7 +151,8 @@ int main (int argc, const char** argv){
 
     gps.stopPeriodicData();
     pos[0] /= count; pos[1] /= count; pos[2] /= count;
-    cerr << "setting position to: lat=" << pos[0] << ", long=" << pos[1] << ", alt=" << pos[2] << endl;
+    cerr << "setting fixed position to current position." << endl;
+    //cerr << "setting position to: lat=" << pos[0] << ", long=" << pos[1] << ", alt=" << pos[2] << endl;
     //gps.setPosition(pos[0], pos[1], pos[2]);
     gps.setPositionFromCurrent();
     gps.setRTKBase(current_port);
