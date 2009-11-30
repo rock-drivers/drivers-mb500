@@ -20,8 +20,12 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+
 using namespace std;
 using namespace gps;
+using namespace boost;
 
 DGPS::DGPS() : IODriver(2048), m_period(1000)
 {
@@ -513,57 +517,45 @@ SatelliteInfo DGPS::getGSV(string port)
     }
 }
 
-Errors DGPS::interpretErrors(string const& result)
 {
+
+
+
+
+Errors DGPS::interpretErrors(string const& message)
+{
+    if( message.find("$GPGST,") != 0 && message.find("$GLGST,") != 0 && message.find("$GNGST,") != 0)
+        throw std::runtime_error("wrong message given to interpretErrors");
+
+    vector<string> fields;
+    split( fields, message, is_any_of(",*") );
+
     Errors data;
-
-    if( result.find("$GPGST,") == 0 || result.find("$GLGST,") == 0 || result.find("$GNGST,") == 0) {
-        int pos = result.find_first_of(",", 0);
-
-        int pos2 = result.find_first_of(",", pos+1);
-        data.timestamp = interpretTime(string(result, pos+1, pos2-pos-1));
-
-        pos = result.find_first_of(",", pos2+1);
-        //float f2 = atof(string(result, pos2+1, pos - pos2 - 1).c_str());
-
-        pos2 = result.find_first_of(",", pos+1);
-        //float f3 = atof( string(result, pos+1, pos2 - pos - 1).c_str());
-
-        pos = result.find_first_of(",", pos2+1);
-        //float f4 = atof(string(result, pos2+1, pos - pos2 - 1).c_str());
-
-        pos2 = result.find_first_of(",", pos+1);
-        //float f5 = atof( string(result, pos+1, pos2 - pos - 1).c_str());
-
-        pos = result.find_first_of(",", pos2+1);
-        data.deviationLatitude = atof( string(result, pos2+1, pos - pos2 - 1).c_str());
-
-        pos2 = result.find_first_of(",", pos+1);
-        data.deviationLongitude = atof( string(result, pos+1, pos2 - pos - 1).c_str());
-
-        pos = result.find_first_of(",", pos2+1);
-        data.deviationAltitude = atof( string(result, pos2+1, pos - pos2 -1).c_str());
-    }
+    data.timestamp = interpretTime(fields[1]);
+    data.deviationLatitude  = atof(fields[6].c_str());
+    data.deviationLongitude = atof(fields[7].c_str());
+    data.deviationAltitude  = atof(fields[8].c_str());
     return data;
 }
 
-bool DGPS::interpretSatelliteInfo(SatelliteInfo& data, string const& result)
+bool DGPS::interpretSatelliteInfo(SatelliteInfo& data, string const& message)
 {
-    if( result.find("$GPGSV,") != 0 && result.find("$GLGSV,") != 0)
+    if( message.find("$GPGSV,") != 0 && message.find("$GLGSV,") != 0)
         throw std::runtime_error("wrong message given to interpretSatelliteInfo");
 
-    int pos = result.find_first_of(",", 7);
-    int msg_count = atoi( string(result, 7, pos-7).c_str());
+    vector<string> fields;
+    split( fields, message, is_any_of(",*") );
+    int msg_count  = atoi(fields[1].c_str());
+    int msg_number = atoi(fields[2].c_str());
+    int sat_count  = atoi(fields[3].c_str());
 
-    int pos2 = result.find_first_of(",", pos+1);
-    int msg_number = atoi( string(result, pos+1, pos2-pos-1).c_str());
-
-    pos = result.find_first_of(",", pos2+1);
-    int sat_count = atoi(string(result, pos2+1, pos - pos2 - 1).c_str());
-
-    if (msg_number == 1 && result.find("$GPGSV") == 0)
+    // interpretSatelliteInfo() accumulates information, since the information
+    // is spanned over multiple messages. We clear data if this is the first
+    // message of a series.
+    if (msg_number == 1 && message.find("$GPGSV") == 0)
         data.clear();
 
+    // Compute the number of satellites in this message
     int field_count;
     if (msg_number != msg_count)
         field_count = 4;
@@ -571,80 +563,50 @@ bool DGPS::interpretSatelliteInfo(SatelliteInfo& data, string const& result)
         field_count = sat_count % 5;
 
     Satellite sat;
-    for(int i=0; i<field_count; ++i) {
-        pos2 = result.find_first_of(",", pos+1);
-        sat.PRN = atoi( string(result, pos+1, pos2 - pos - 1).c_str());
-
-        pos = result.find_first_of(",", pos2+1);
-        sat.elevation = atoi( string(result, pos2+1, pos - pos2 - 1).c_str());
-
-        pos2 = result.find_first_of(",", pos+1);
-        sat.azimuth = atoi( string(result, pos+1, pos2 - pos - 1).c_str());
-
-        pos = result.find_first_of(",", pos2+1);
-        sat.SNR = atof( string(result, pos2+1, pos - pos2 - 1).c_str());
+    for(int i = 0; i < field_count; ++i) {
+        sat.PRN       = atoi(fields[4 + i * 4].c_str());
+        sat.elevation = atoi(fields[5 + i * 4].c_str());
+        sat.azimuth   = atoi(fields[6 + i * 4].c_str());
+        sat.SNR       = atoi(fields[7 + i * 4].c_str());
 
         data.push_back(sat);
     }
     return msg_number == msg_count;
 }
 
-Position DGPS::interpretInfo(string const& result)
+Position DGPS::interpretInfo(string const& message)
 {
-    Position data;
-
-    double m1, m2, m4, f8, f9, f10, f11;
-    string c3, c5;
-    int d6, d7, d12;
-    if( !result.find("$GPGGA,") == 0)
+    if( !message.find("$GPGGA,") == 0)
         throw std::runtime_error("invalid message in interpretInfo");
 
-    int pos = result.find_first_of(",", 7);
-    data.timestamp = interpretTime(string(result, 7, pos-7));
+    vector<string> fields;
+    split( fields, message, is_any_of(",*") );
 
-    int pos2 = result.find_first_of(",", pos+1);
-    data.latitude = atof( string(result, pos+1, pos2-pos-1).c_str());
-    double minutes = fmod(data.latitude, 100);
-    data.latitude = static_cast<int>(data.latitude / 100) + minutes / 60.0;
+    Position data;
 
-    pos = result.find_first_of(",", pos2+1);
-    if (result[pos2 + 1] == 'S') data.latitude = -data.latitude;
-
-    pos2 = result.find_first_of(",", pos+1);
-    data.longitude = atof( string(result, pos+1, pos2 - pos - 1).c_str());
-    minutes = fmod(data.longitude, 100);
-    data.longitude = static_cast<int>(data.longitude / 100) + minutes / 60.0;
-
-    pos = result.find_first_of(",", pos2+1);
-    if (result[pos2 + 1] == 'W') data.longitude = -data.longitude;
-
-    pos2 = result.find_first_of(",", pos+1);
-    int position_type = atoi( string(result, pos+1, pos2 - pos - 1).c_str());
+    data.timestamp = interpretTime(fields[1]);
+    data.latitude  = interpretAngle(fields[2], fields[3] == "N");
+    data.longitude = interpretAngle(fields[4], fields[5] == "E");
+    int position_type = atoi(fields[6].c_str());
     if (position_type < 0 || position_type > 5)
         position_type = INVALID;
     data.positionType = static_cast<GPS_SOLUTION_TYPES>(position_type);
 
-    pos = result.find_first_of(",", pos2+1);
-    data.noOfSatellites = atoi( string(result, pos2+1, pos - pos2 - 1).c_str());
-
-    pos2 = result.find_first_of(",", pos+1);
-    f8 = atof( string(result, pos+1, pos2 - pos - 1).c_str());
-
-    pos = result.find_first_of(",", pos2+1);
-    data.altitude = atof( string(result, pos2+1, pos - pos2 -1).c_str());
-    if( result[pos+1] == 'M') pos += 2;
-
-    pos2 = result.find_first_of(",", pos+1);
-    data.geoidalSeparation = atof( string(result, pos+1, pos - pos - 1).c_str());
-    if( result[pos2+1] == 'M') pos2 += 2;
-
-    pos = result.find_first_of(",", pos2+1);
-    data.ageOfDifferentialCorrections = atof( string(result, pos2+1, pos - pos2 - 1).c_str());
-
-    pos2 = result.find_first_of(".", pos+1);
-    d12 = atoi( string(result, pos+1, pos2 - pos - 1).c_str());
-
+    data.noOfSatellites = atoi(fields[7].c_str());
+    data.altitude       = atof(fields[9].c_str());
+    data.geoidalSeparation = atof(fields[11].c_str());
+    data.ageOfDifferentialCorrections = atof(fields[13].c_str());
     return data;
+}
+
+double DGPS::interpretAngle(std::string const& value, bool positive)
+{
+    double angle = atof(value.c_str());
+    double minutes = fmod(angle, 100);
+    angle = static_cast<int>(angle / 100) + minutes / 60.0;
+    if (!positive)
+        angle = -angle;
+    return angle;
 }
 
 DFKI::Time DGPS::interpretTime(std::string const& time)
