@@ -125,13 +125,7 @@ int main (int argc, const char** argv){
     }
     gps.setPeriodicData(port_name, 1);
     cout << "DGPS board initialized" << endl;
-    char const* fields[12] = {
-        "time", "long", "lat", "alt", "dlong", "dlat", "dalt", "sol_type", "sat_count",
-        "gps", "sbas", "glonass" };
-
-    for (int i = 0; i < 12; ++i)
-        cout << setw(10) << fields[i] << " ";
-    cout << endl;
+    DGPS::displayHeader(cout);
 
     DFKI::Time last_update;
 

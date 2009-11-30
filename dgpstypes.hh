@@ -92,14 +92,19 @@ namespace gps {
         double SNR;
 
 #ifndef __orogen
-        CONSTELLATIONS getConstellation() const
-        {
-            if (PRN < 33)
+	static CONSTELLATIONS getConstellationFromPRN(int prn)
+	{
+            if (prn < 33)
                 return CONSTELLATION_GPS;
-            else if (PRN < 65)
+            else if (prn < 65)
                 return CONSTELLATION_SBAS;
             else
                 return CONSTELLATION_GLONASS;
+	}
+
+        CONSTELLATIONS getConstellation() const
+        {
+	    return getConstellationFromPRN(PRN);
         }
 #endif
     };

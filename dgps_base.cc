@@ -108,13 +108,7 @@ int main (int argc, const char** argv){
 
     gps.setPeriodicData(current_port, AVERAGING_SAMPLING);
     cerr << "DGPS board initialized" << endl;
-    char const* fields[12] = {
-        "time", "long", "lat", "alt", "dlong", "dlat", "dalt", "sol_type", "sat_count",
-        "gps", "sbas", "glonass" };
-
-    for (int i = 0; i < 12; ++i)
-        cerr << setw(10) << fields[i] << " ";
-    cerr << endl;
+    DGPS::displayHeader(cerr);
 
     DFKI::Time last_update, first_solution;
 
@@ -125,7 +119,7 @@ int main (int argc, const char** argv){
         gps.collectPeriodicData();
         if (gps.position.timestamp == gps.errors.timestamp && (gps.position.timestamp > last_update || last_update == DFKI::Time()))
         {
-	    if (gps.position.positionType != gps::NO_SOLUTION)
+	    if (gps.position.positionType != gps::NO_SOLUTION && gps.position.positionType != gps::INVALID)
 	    {
                 if (first_solution.isNull())
                 {

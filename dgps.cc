@@ -679,43 +679,64 @@ static const int MAX_SOLUTION_ID = 5;
 
 std::ostream& DGPS::display(std::ostream& io, DGPS const& driver)
 {
-    return display(io, driver.position, driver.errors, driver.satellites);
+    return display(io, driver.position, driver.errors, driver.satellites, driver.solutionQuality);
 }
 
-std::ostream& DGPS::display(std::ostream& io, gps::Position const& pos, gps::Errors const& errors, gps::SatelliteInfo const& satellites)
+std::ostream& DGPS::displayHeader(std::ostream& io)
+{
+    cout << "Time                          | Latitude      Longitude     Altitude | dLat   dLong  dAlt | Mode      PDOP    Used   Tracked | DiffAge" << std::endl;
+    return io;
+}
+
+std::ostream& DGPS::display(std::ostream& io,
+	gps::Position const& pos, gps::Errors const& errors,
+	gps::SatelliteInfo const& satellites,
+	gps::SolutionQuality const& quality)
 {
     time_t time_secs = pos.timestamp.toSeconds();
-    int time_msecs = pos.timestamp.microseconds / 1000;
+    int time_msecs   = pos.timestamp.microseconds / 1000;
 
     char* time_string = ctime(&time_secs);
     io
-        << setw(10) << string(time_string, time_string + strlen(time_string) - 1) << "." << setw(3) << time_msecs << " "
-        << setprecision(10) << fixed << setw(15) << pos.longitude << " "
-        << setw(15) << pos.latitude << " "
-        << setprecision(2) << setw(8) << pos.altitude << " "
-        << setprecision(3) << setw(8) << errors.deviationLongitude << " "
-        << setprecision(3) << setw(8) << errors.deviationLatitude << " "
-        << setprecision(3) << setw(8) << errors.deviationAltitude << " ";
+        << setw(10) << string(time_string, time_string + strlen(time_string) - 1) << "." << setw(3) << setfill('0') << time_msecs << " "
+	<< setfill(' ')
+	<< " | "
+        << setprecision(10) << fixed << setw(13) << pos.longitude << " "
+        << setprecision(10) << fixed << setw(13) << pos.latitude << " "
+        << setprecision(2) << setw(7) << pos.altitude << " "
+	<< " | "
+        << setprecision(2) << setw(5) << errors.deviationLongitude << " "
+        << setprecision(2) << setw(5) << errors.deviationLatitude << " "
+        << setprecision(2) << setw(5) << errors.deviationAltitude << " "
+	<< " | ";
 
     if (pos.positionType > MAX_SOLUTION_ID)
         io << setw(10) << "UNDEFINED=" << (int)pos.positionType << " ";
     else
         io << setw(10) << solutionNames[pos.positionType] << " ";
 
-    io << setw(5) << pos.noOfSatellites << " ";
+    io << setw(4) << setprecision(1) << quality.hdop << " ";
+    io << setw(2) << pos.noOfSatellites << " ";
+    { // count the number of satellites in use, per constellation
+	int sat_count = quality.usedSatellites.size();
+	int counts[3] = { 0, 0, 0 };
+	for (int i = 0; i < sat_count; ++i)
+	    counts[Satellite::getConstellationFromPRN(quality.usedSatellites[i])]++;
+	io << setw(2) << counts[0] << "/" << setw(2) << counts[2] << " ";
+    }
 
-    int sat_count = satellites.size();
-    int counts[3] = { 0, 0, 0 };
-    for (int i = 0; i < sat_count; ++i)
-        counts[satellites[i].getConstellation()]++;
+    { // count the number of satellites in view, per constellation
+	int sat_count = satellites.size();
+	int counts[3] = { 0, 0, 0 };
+	for (int i = 0; i < sat_count; ++i)
+	{
+	    if (satellites[i].SNR > 0)
+		counts[satellites[i].getConstellation()]++;
+	}
+	io << setw(2) << counts[0] << "/" << setw(2) << counts[2] << " ";
+    }
 
-    io 
-        << setw(5) << counts[0] << " "
-        << setw(5) << counts[1] << " "
-        << setw(5) << counts[2] << " "
-        << setw(5);
-
-    io << pos.ageOfDifferentialCorrections;
+    io << " | " << pos.ageOfDifferentialCorrections;
 
     return io;
 }
