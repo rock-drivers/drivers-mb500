@@ -1,5 +1,8 @@
 <package>
-  <description brief="driver for the Magellan MB500 dGPS board">
+  <description brief="driver for the GPS boards using the PASH protocol">
+      This is a driver for GPS boards that use the PASH protocol. In particular,
+      it is used to drive a Magellan MB500 board, and includes functionality for
+      dGPS setups (correction sending through network, RTK-specific options).
   </description>
   <author>Sylvain Joyeux/sylvain.joyeux@dfki.de</author>
   <copyright>
