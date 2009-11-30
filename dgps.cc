@@ -434,7 +434,7 @@ void DGPS::collectPeriodicData()
         cerr << message << endl;
     else if( message.find("$GPGST,") == 0 || message.find("$GLGST,") == 0 || message.find("$GNGST,") == 0)
         this->errors = interpretErrors(message);
-    else if( message.find("$GPGSA,") == 0 || message.find("$GPGSA,") == 0 || message.find("$GPGSA,") == 0 )
+    else if( message.find("$GPGSA,") == 0 || message.find("$GLGSA,") == 0 || message.find("$GNGSA,") == 0 )
         this->solutionQuality = interpretQuality(message);
     else if( message.find("$GPGSV,") == 0 || message.find("$GLGSV,") == 0)
     {
