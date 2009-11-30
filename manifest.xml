@@ -8,7 +8,7 @@
   <copyright>
       DFKI/robotik@dfki.de
   </copyright>
-  <license>GPL v2 or later</license>
+  <license>LGPL v2 or later</license>
 
   <depend package="base" />
   <depend package="drivers/iodrivers_base" />
