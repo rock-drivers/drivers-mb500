@@ -415,9 +415,15 @@ bool DGPS::setNMEA(string command, string port, bool onOff, double outputRate)
 bool DGPS::setPeriodicData(std::string const& port, double period)
 {
     m_period = period * 1000;
+
+    int stats_period = period;
+    if (stats_period < 5)
+	stats_period = 5;
+
     if(! setNMEA("GGA", port, true, period)) return 0;
     if(! setNMEA("GST", port, true, period)) return 0;
-    if(! setNMEA("GSV", port, true, period)) return 0;
+    if(! setNMEA("GSA", port, true, stats_period)) return 0;
+    if(! setNMEA("GSV", port, true, stats_period)) return 0;
     return 1;
 }
 
