@@ -45,6 +45,10 @@ namespace gps {
         double deviationLatitude;
         double deviationLongitude;
         double deviationAltitude;
+#ifndef __orogen
+	Solution()
+	    : positionType(INVALID) {}
+#endif
     };
 
     struct Position {
@@ -56,6 +60,10 @@ namespace gps {
         double altitude;
         double geoidalSeparation;
         double ageOfDifferentialCorrections;
+#ifndef __orogen
+	Position()
+	    : positionType(INVALID) {}
+#endif
     };
 
     struct Errors {
