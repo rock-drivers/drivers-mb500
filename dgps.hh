@@ -135,12 +135,14 @@ class DGPS : public IODriver {
 		gps::Position position;
 		gps::Errors   errors;
 		gps::SatelliteInfo satellites;
+                gps::SolutionQuality solutionQuality;
 
 		void writeCorrectionData(char const* data, size_t size, int timeout);
 	protected:
                 float m_period;
 		gps::SatelliteInfo tempSatellites;
 
+                static gps::SolutionQuality interpretQuality(std::string const& message);
 		static gps::Errors interpretErrors(std::string const& msg);
 		static gps::Position interpretInfo(std::string const& msg);
 		static bool interpretSatelliteInfo(gps::SatelliteInfo& data, std::string const& msg);

@@ -434,6 +434,8 @@ void DGPS::collectPeriodicData()
         cerr << message << endl;
     else if( message.find("$GPGST,") == 0 || message.find("$GLGST,") == 0 || message.find("$GNGST,") == 0)
         this->errors = interpretErrors(message);
+    else if( message.find("$GPGSA,") == 0 || message.find("$GPGSA,") == 0 || message.find("$GPGSA,") == 0 )
+        this->solutionQuality = interpretQuality(message);
     else if( message.find("$GPGSV,") == 0 || message.find("$GLGSV,") == 0)
     {
         if (interpretSatelliteInfo(tempSatellites, message))
@@ -517,10 +519,26 @@ SatelliteInfo DGPS::getGSV(string port)
     }
 }
 
+SolutionQuality DGPS::interpretQuality(string const& message)
 {
+    if( message.find("$GPGSA,") != 0 && message.find("$GLGSA,") != 0 && message.find("$GNGSA,") != 0)
+        throw std::runtime_error("wrong message given to interpretErrors");
 
+    vector<string> fields;
+    split( fields, message, is_any_of(",*") );
 
+    SolutionQuality data;
+    for (int i = 3; i < 15; ++i)
+    {
+        if (fields[i] != "")
+            data.usedSatellites.push_back( atoi(fields[i].c_str()) );
+    }
 
+    data.pdop = atof(fields[15].c_str());
+    data.hdop = atof(fields[16].c_str());
+    data.vdop = atof(fields[17].c_str());
+    return data;
+}
 
 Errors DGPS::interpretErrors(string const& message)
 {

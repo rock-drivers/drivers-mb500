@@ -65,6 +65,13 @@ namespace gps {
         double deviationAltitude;
     };
 
+    struct SolutionQuality {
+        std::vector<int> usedSatellites;
+        double pdop;
+        double hdop;
+        double vdop;
+    };
+
     enum CONSTELLATIONS {
         CONSTELLATION_GPS,
         CONSTELLATION_SBAS,
