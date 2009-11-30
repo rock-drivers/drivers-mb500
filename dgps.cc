@@ -647,7 +647,7 @@ Position DGPS::interpretInfo(string const& result)
     return data;
 }
 
-DFKI::Time DGPS::interpretTime(std::string const& time)
+base::Time DGPS::interpretTime(std::string const& time)
 {
     float gps_time   = atof(time.c_str());
     int integer_part = gps_time;
@@ -665,7 +665,7 @@ DFKI::Time DGPS::interpretTime(std::string const& time)
 
     // And convert it back to seconds since epoch
     time_t gps_epoch = timegm(&utc_hms);
-    DFKI::Time result = DFKI::Time(gps_epoch, microsecs);
+    base::Time result = base::Time(gps_epoch, microsecs);
     return result;
 }
 

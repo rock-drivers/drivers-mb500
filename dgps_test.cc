@@ -31,13 +31,13 @@ int main (int argc, const char** argv){
         cout << setw(10) << fields[i] << " ";
     cout << endl;
 
-    DFKI::Time last_update;
+    base::Time last_update;
 
     while(true)
     {
 	try {
 		gps.collectPeriodicData();
-		if (gps.position.timestamp == gps.errors.timestamp && (gps.position.timestamp > last_update || last_update == DFKI::Time()))
+		if (gps.position.timestamp == gps.errors.timestamp && (gps.position.timestamp > last_update || last_update == base::Time()))
 		{
 		    last_update = gps.position.timestamp;
 		    DGPS::display(cout, gps.position, gps.errors, gps.satellites) << endl;

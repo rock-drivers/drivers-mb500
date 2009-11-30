@@ -144,7 +144,7 @@ class DGPS : public IODriver {
 		static gps::Errors interpretErrors(std::string const& msg);
 		static gps::Position interpretInfo(std::string const& msg);
 		static bool interpretSatelliteInfo(gps::SatelliteInfo& data, std::string const& msg);
-                static DFKI::Time  interpretTime(std::string const& time);
+                static base::Time  interpretTime(std::string const& time);
 
 		std::string read(int timeout);
 		void write(const std::string&, int timeout);
