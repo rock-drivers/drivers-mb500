@@ -528,15 +528,16 @@ SolutionQuality DGPS::interpretQuality(string const& message)
     split( fields, message, is_any_of(",*") );
 
     SolutionQuality data;
-    for (int i = 3; i < 15; ++i)
+    int sat_end = fields.size() - 4;
+    for (int i = 3; i < sat_end; ++i)
     {
         if (fields[i] != "")
             data.usedSatellites.push_back( atoi(fields[i].c_str()) );
     }
 
-    data.pdop = atof(fields[15].c_str());
-    data.hdop = atof(fields[16].c_str());
-    data.vdop = atof(fields[17].c_str());
+    data.pdop = atof(fields[sat_end].c_str());
+    data.hdop = atof(fields[sat_end + 1].c_str());
+    data.vdop = atof(fields[sat_end + 2].c_str());
     return data;
 }
 
