@@ -74,6 +74,11 @@ class DGPS : public IODriver {
                 /** Select the type of receiver motion */
 		bool setReceiverDynamics(DYNAMICS_MODE mode);
 
+		/** Sets the board's user dynamics parameters. You must call
+		 * setReceiverDynamics(USER_DEFINED) explicitely afterwards to
+		 * select this mode. */
+		bool setUserDynamics(int h_vel, int h_acc, int v_vec, int v_acc);
+
                 /** Forces the receiver to perform PVT initialization on a point
                  * with known geographical coordinates (expressed in the ITRF
                  * model used).

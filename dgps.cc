@@ -81,6 +81,16 @@ bool DGPS::openRover(std::string const& device_name)
     return setReceiverDynamics(ADAPTIVE);
 }
 
+bool DGPS::setUserDynamics(int h_vel, int h_acc, int v_vec, int v_acc)
+{
+    write("$PASHS,UDP," +
+	    boost::lexical_cast<string>(h_vel) + "," +
+	    boost::lexical_cast<string>(h_acc) + "," +
+	    boost::lexical_cast<string>(v_vec) + "," +
+	    boost::lexical_cast<string>(v_acc), 1000);
+    return verifyAcknowledge();
+}
+
 void DGPS::reset(bool cold_start)
 {
     if (cold_start)
