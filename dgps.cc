@@ -544,6 +544,7 @@ SolutionQuality DGPS::interpretQuality(string const& message)
     split( fields, message, is_any_of(",*") );
 
     SolutionQuality data;
+    data.timestamp = DFKI::Time::now();
     int sat_end = fields.size() - 4;
     for (int i = 3; i < sat_end; ++i)
     {
@@ -588,7 +589,10 @@ bool DGPS::interpretSatelliteInfo(SatelliteInfo& data, string const& message)
     // is spanned over multiple messages. We clear data if this is the first
     // message of a series.
     if (msg_number == 1 && message.find("$GPGSV") == 0)
-        data.clear();
+    {
+        data.knownSatellites.clear();
+        data.timestamp = DFKI::Time::now();
+    }
 
     // Compute the number of satellites in this message
     int field_count;
@@ -604,7 +608,7 @@ bool DGPS::interpretSatelliteInfo(SatelliteInfo& data, string const& message)
         sat.azimuth   = atoi(fields[6 + i * 4].c_str());
         sat.SNR       = atoi(fields[7 + i * 4].c_str());
 
-        data.push_back(sat);
+        data.knownSatellites.push_back(sat);
     }
     return msg_number == msg_count;
 }
@@ -726,12 +730,13 @@ std::ostream& DGPS::display(std::ostream& io,
     }
 
     { // count the number of satellites in view, per constellation
-	int sat_count = satellites.size();
+	int sat_count = satellites.knownSatellites.size();
 	int counts[3] = { 0, 0, 0 };
 	for (int i = 0; i < sat_count; ++i)
 	{
-	    if (satellites[i].SNR > 0)
-		counts[satellites[i].getConstellation()]++;
+            Satellite const& sat = satellites.knownSatellites[i];
+	    if (sat.SNR > 0)
+		counts[sat.getConstellation()]++;
 	}
 	io << setw(2) << counts[0] << "/" << setw(2) << counts[2] << " ";
     }

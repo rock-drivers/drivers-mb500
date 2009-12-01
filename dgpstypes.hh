@@ -74,6 +74,7 @@ namespace gps {
     };
 
     struct SolutionQuality {
+        DFKI::Time timestamp;
         std::vector<int> usedSatellites;
         double pdop;
         double hdop;
@@ -109,7 +110,10 @@ namespace gps {
 #endif
     };
 
-    typedef std::vector < gps::Satellite> SatelliteInfo;
+    struct SatelliteInfo {
+        DFKI::Time timestamp;
+        std::vector < gps::Satellite> knownSatellites;
+    };
 }
 
 #endif
