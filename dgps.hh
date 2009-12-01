@@ -40,17 +40,6 @@ class DGPS : public IODriver {
                 };
                 /** Changes the code correlator, for multipath mitigation */
 		bool setCodeCorrelatorMode(CORRELATOR_MODE mode);
-                enum DYNAMICS_MODE {
-                    STATIC       = 1,
-                    QUASI_STATIC = 2,
-                    WALKING      = 3,
-                    SHIP         = 4,
-                    AUTOMOBILE   = 5,
-                    AIRCRAFT     = 6,
-                    UNLIMITED    = 7,
-                    ADAPTIVE     = 8,
-                    USER_DEFINED = 9
-                };
 
                 /** Reset the board. If \c cold_start is true, reset all stored
                  * information about the GNSS constellations
@@ -72,7 +61,7 @@ class DGPS : public IODriver {
                 void dumpSatellites();
 
                 /** Select the type of receiver motion */
-		bool setReceiverDynamics(DYNAMICS_MODE mode);
+		bool setReceiverDynamics(gps::DYNAMICS_MODEL mode);
 
 		/** Sets the board's user dynamics parameters. You must call
 		 * setReceiverDynamics(USER_DEFINED) explicitely afterwards to

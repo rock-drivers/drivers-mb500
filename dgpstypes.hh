@@ -32,6 +32,19 @@ namespace gps {
         ADVANCED_MULTIPATH = 512
     };
 
+    enum DYNAMICS_MODEL
+    {
+        STATIC       = 1,
+        QUASI_STATIC = 2,
+        WALKING      = 3,
+        SHIP         = 4,
+        AUTOMOBILE   = 5,
+        AIRCRAFT     = 6,
+        UNLIMITED    = 7,
+        ADAPTIVE     = 8,
+        USER_DEFINED = 9
+    };
+
     struct Solution {
         DFKI::Time timestamp;
         double latitude;
