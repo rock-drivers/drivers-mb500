@@ -610,7 +610,7 @@ bool DGPS::interpretSatelliteInfo(SatelliteInfo& data, string const& message)
 
         data.knownSatellites.push_back(sat);
     }
-    return msg_number == msg_count;
+    return (msg_number == msg_count && message.find("$GLGSV") == 0);
 }
 
 Position DGPS::interpretInfo(string const& message)
