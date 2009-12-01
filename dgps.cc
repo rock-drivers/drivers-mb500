@@ -87,7 +87,7 @@ bool DGPS::setUserDynamics(int h_vel, int h_acc, int v_vec, int v_acc)
 	    boost::lexical_cast<string>(h_vel) + "," +
 	    boost::lexical_cast<string>(h_acc) + "," +
 	    boost::lexical_cast<string>(v_vec) + "," +
-	    boost::lexical_cast<string>(v_acc), 1000);
+	    boost::lexical_cast<string>(v_acc) + "\r\n", 1000);
     return verifyAcknowledge();
 }
 
