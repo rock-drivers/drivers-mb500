@@ -104,7 +104,7 @@ class DGPS : public IODriver {
 		bool setCodeMeasurementSmoothing(int, int, int);
 		bool setNMEA(std::string, std::string, bool, double = 1);
 		bool setNMEALL(std::string, bool);
-		bool verifyAcknowledge();
+		bool verifyAcknowledge(std::string const& cmd = "");
 
 		/** Interprets a NMEA GST message and returns the unmarshalled
                  * GST structure
