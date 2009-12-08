@@ -73,6 +73,21 @@ bool DGPS::openBase(std::string const& device_name)
     return setReceiverDynamics(STATIC);
 }
 
+bool DGPS::waitForBoardReset()
+{
+    DFKI::Time reset_start = DFKI::Time::now();
+    while((DFKI::Time::now() - reset_start).toSeconds() < 10)
+    {
+        try
+        {
+            read(m_acq_timeout);
+            return true;
+        }
+        catch(timeout_error) {}
+    }
+    return false;
+}
+
 bool DGPS::openRover(std::string const& device_name)
 {
     if (!open(device_name))
@@ -98,6 +113,7 @@ void DGPS::reset(bool cold_start)
     else
         write("$PASHS,INI,9,9,5\r\n", 1000);
 
+    waitForBoardReset();
     stopPeriodicData();
 }
 

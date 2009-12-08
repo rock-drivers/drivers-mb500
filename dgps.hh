@@ -136,6 +136,7 @@ class DGPS : public IODriver {
                 float m_period;
 		gps::SatelliteInfo tempSatellites;
 
+                bool waitForBoardReset();
                 static gps::SolutionQuality interpretQuality(std::string const& message);
 		static gps::Errors interpretErrors(std::string const& msg);
 		static gps::Position interpretInfo(std::string const& msg);
