@@ -40,17 +40,6 @@ class DGPS : public IODriver {
                 };
                 /** Changes the code correlator, for multipath mitigation */
 		bool setCodeCorrelatorMode(CORRELATOR_MODE mode);
-                enum DYNAMICS_MODE {
-                    STATIC       = 1,
-                    QUASI_STATIC = 2,
-                    WALKING      = 3,
-                    SHIP         = 4,
-                    AUTOMOBILE   = 5,
-                    AIRCRAFT     = 6,
-                    UNLIMITED    = 7,
-                    ADAPTIVE     = 8,
-                    USER_DEFINED = 9
-                };
 
                 /** Reset the board. If \c cold_start is true, reset all stored
                  * information about the GNSS constellations
@@ -72,7 +61,12 @@ class DGPS : public IODriver {
                 void dumpSatellites();
 
                 /** Select the type of receiver motion */
-		bool setReceiverDynamics(DYNAMICS_MODE mode);
+		bool setReceiverDynamics(gps::DYNAMICS_MODEL mode);
+
+		/** Sets the board's user dynamics parameters. You must call
+		 * setReceiverDynamics(USER_DEFINED) explicitely afterwards to
+		 * select this mode. */
+		bool setUserDynamics(int h_vel, int h_acc, int v_vec, int v_acc);
 
                 /** Forces the receiver to perform PVT initialization on a point
                  * with known geographical coordinates (expressed in the ITRF
@@ -99,7 +93,7 @@ class DGPS : public IODriver {
 		bool setCodeMeasurementSmoothing(int, int, int);
 		bool setNMEA(std::string, std::string, bool, double = 1);
 		bool setNMEALL(std::string, bool);
-		bool verifyAcknowledge();
+		bool verifyAcknowledge(std::string const& cmd = "");
 
 		/** Interprets a NMEA GST message and returns the unmarshalled
                  * GST structure
@@ -135,15 +129,18 @@ class DGPS : public IODriver {
 		gps::Position position;
 		gps::Errors   errors;
 		gps::SatelliteInfo satellites;
+                gps::SolutionQuality solutionQuality;
 
 		void writeCorrectionData(char const* data, size_t size, int timeout);
 	protected:
                 float m_period;
 		gps::SatelliteInfo tempSatellites;
 
+                static gps::SolutionQuality interpretQuality(std::string const& message);
 		static gps::Errors interpretErrors(std::string const& msg);
 		static gps::Position interpretInfo(std::string const& msg);
 		static bool interpretSatelliteInfo(gps::SatelliteInfo& data, std::string const& msg);
+                static double interpretAngle(std::string const& value, bool positive);
                 static base::Time  interpretTime(std::string const& time);
 
 		std::string read(int timeout);
@@ -151,7 +148,8 @@ class DGPS : public IODriver {
 		int extractPacket(uint8_t const* buffer, size_t buffer_size) const;
 
         public:
-                static std::ostream& display(std::ostream& io, gps::Position const& pos, gps::Errors const& errors, gps::SatelliteInfo const& info);
+		static std::ostream& displayHeader(std::ostream& io);
+                static std::ostream& display(std::ostream& io, gps::Position const& pos, gps::Errors const& errors, gps::SatelliteInfo const& info, gps::SolutionQuality const& quality);
                 static std::ostream& display(std::ostream& io, DGPS const& driver);
 };
 

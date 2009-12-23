@@ -100,7 +100,7 @@ int main (int argc, const char** argv){
     if(!gps.openBase(device_name))
         return 1;
 
-    if (!gps.setReceiverDynamics(DGPS::STATIC))
+    if (!gps.setReceiverDynamics(gps::STATIC))
     {
         cerr << "could not set the receiver dynamics" << endl;
         return 1;
@@ -108,13 +108,7 @@ int main (int argc, const char** argv){
 
     gps.setPeriodicData(current_port, AVERAGING_SAMPLING);
     cerr << "DGPS board initialized" << endl;
-    char const* fields[12] = {
-        "time", "long", "lat", "alt", "dlong", "dlat", "dalt", "sol_type", "sat_count",
-        "gps", "sbas", "glonass" };
-
-    for (int i = 0; i < 12; ++i)
-        cerr << setw(10) << fields[i] << " ";
-    cerr << endl;
+    DGPS::displayHeader(cerr);
 
     base::Time last_update, first_solution;
 
@@ -125,7 +119,7 @@ int main (int argc, const char** argv){
         gps.collectPeriodicData();
         if (gps.position.timestamp == gps.errors.timestamp && (gps.position.timestamp > last_update || last_update == base::Time()))
         {
-	    if (gps.position.positionType != gps::NO_SOLUTION)
+	    if (gps.position.positionType != gps::NO_SOLUTION && gps.position.positionType != gps::INVALID)
 	    {
                 if (first_solution.isNull())
                 {
@@ -151,7 +145,8 @@ int main (int argc, const char** argv){
 
     gps.stopPeriodicData();
     pos[0] /= count; pos[1] /= count; pos[2] /= count;
-    cerr << "setting position to: lat=" << pos[0] << ", long=" << pos[1] << ", alt=" << pos[2] << endl;
+    cerr << "setting fixed position to current position." << endl;
+    //cerr << "setting position to: lat=" << pos[0] << ", long=" << pos[1] << ", alt=" << pos[2] << endl;
     //gps.setPosition(pos[0], pos[1], pos[2]);
     gps.setPositionFromCurrent();
     gps.setRTKBase(current_port);

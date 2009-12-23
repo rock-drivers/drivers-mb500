@@ -43,7 +43,7 @@ int main(int argc, char** argv)
     else if (command == "moving")
     {
         gps.resetStoredPosition();
-        gps.setReceiverDynamics(DGPS::ADAPTIVE);
+        gps.setReceiverDynamics(gps::ADAPTIVE);
     }
     else
         usage();

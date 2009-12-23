@@ -23,13 +23,7 @@ int main (int argc, const char** argv){
 
     gps.setPeriodicData(port_name, 1);
     cout << "DGPS board initialized" << endl;
-    char const* fields[12] = {
-        "time", "long", "lat", "alt", "dlong", "dlat", "dalt", "sol_type", "sat_count",
-        "gps", "sbas", "glonass" };
-
-    for (int i = 0; i < 12; ++i)
-        cout << setw(10) << fields[i] << " ";
-    cout << endl;
+    DGPS::displayHeader(cout);
 
     base::Time last_update;
 
@@ -40,7 +34,7 @@ int main (int argc, const char** argv){
 		if (gps.position.timestamp == gps.errors.timestamp && (gps.position.timestamp > last_update || last_update == base::Time()))
 		{
 		    last_update = gps.position.timestamp;
-		    DGPS::display(cout, gps.position, gps.errors, gps.satellites) << endl;
+		    DGPS::display(cout, gps) << endl;
 
 		}
 	} 

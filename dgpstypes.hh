@@ -32,6 +32,19 @@ namespace gps {
         ADVANCED_MULTIPATH = 512
     };
 
+    enum DYNAMICS_MODEL
+    {
+        STATIC       = 1,
+        QUASI_STATIC = 2,
+        WALKING      = 3,
+        SHIP         = 4,
+        AUTOMOBILE   = 5,
+        AIRCRAFT     = 6,
+        UNLIMITED    = 7,
+        ADAPTIVE     = 8,
+        USER_DEFINED = 9
+    };
+
     struct Solution {
         base::Time timestamp;
         double latitude;
@@ -45,6 +58,10 @@ namespace gps {
         double deviationLatitude;
         double deviationLongitude;
         double deviationAltitude;
+#ifndef __orogen
+	Solution()
+	    : positionType(INVALID) {}
+#endif
     };
 
     struct Position {
@@ -56,6 +73,10 @@ namespace gps {
         double altitude;
         double geoidalSeparation;
         double ageOfDifferentialCorrections;
+#ifndef __orogen
+	Position()
+	    : positionType(INVALID) {}
+#endif
     };
 
     struct Errors {
@@ -63,6 +84,14 @@ namespace gps {
         double deviationLatitude;
         double deviationLongitude;
         double deviationAltitude;
+    };
+
+    struct SolutionQuality {
+        base::Time timestamp;
+        std::vector<int> usedSatellites;
+        double pdop;
+        double hdop;
+        double vdop;
     };
 
     enum CONSTELLATIONS {
@@ -77,19 +106,27 @@ namespace gps {
         double SNR;
 
 #ifndef __orogen
-        CONSTELLATIONS getConstellation() const
-        {
-            if (PRN < 33)
+	static CONSTELLATIONS getConstellationFromPRN(int prn)
+	{
+            if (prn < 33)
                 return CONSTELLATION_GPS;
-            else if (PRN < 65)
+            else if (prn < 65)
                 return CONSTELLATION_SBAS;
             else
                 return CONSTELLATION_GLONASS;
+	}
+
+        CONSTELLATIONS getConstellation() const
+        {
+	    return getConstellationFromPRN(PRN);
         }
 #endif
     };
 
-    typedef std::vector < gps::Satellite> SatelliteInfo;
+    struct SatelliteInfo {
+        base::Time timestamp;
+        std::vector < gps::Satellite> knownSatellites;
+    };
 }
 
 #endif
