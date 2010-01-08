@@ -46,7 +46,7 @@ namespace gps {
     };
 
     struct Solution {
-        base::Time timestamp;
+        base::Time time;
         double latitude;
         double longitude;
         GPS_SOLUTION_TYPES positionType;
@@ -65,7 +65,7 @@ namespace gps {
     };
 
     struct Position {
-        base::Time timestamp;
+        base::Time time;
         double latitude;
         double longitude;
         GPS_SOLUTION_TYPES positionType;
@@ -80,14 +80,14 @@ namespace gps {
     };
 
     struct Errors {
-        base::Time timestamp;
+        base::Time time;
         double deviationLatitude;
         double deviationLongitude;
         double deviationAltitude;
     };
 
     struct SolutionQuality {
-        base::Time timestamp;
+        base::Time time;
         std::vector<int> usedSatellites;
         double pdop;
         double hdop;
@@ -124,7 +124,7 @@ namespace gps {
     };
 
     struct SatelliteInfo {
-        base::Time timestamp;
+        base::Time time;
         std::vector < gps::Satellite> knownSatellites;
     };
 }

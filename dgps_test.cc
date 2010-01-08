@@ -31,9 +31,9 @@ int main (int argc, const char** argv){
     {
 	try {
 		gps.collectPeriodicData();
-		if (gps.position.timestamp == gps.errors.timestamp && (gps.position.timestamp > last_update || last_update == base::Time()))
+		if (gps.position.time == gps.errors.time && (gps.position.time > last_update || last_update == base::Time()))
 		{
-		    last_update = gps.position.timestamp;
+		    last_update = gps.position.time;
 		    DGPS::display(cout, gps) << endl;
 
 		}

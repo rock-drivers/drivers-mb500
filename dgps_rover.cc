@@ -166,10 +166,10 @@ int main (int argc, const char** argv){
         {
             try {
                 gps.collectPeriodicData();
-                if (gps.position.timestamp == gps.errors.timestamp && (gps.position.timestamp > last_update || last_update == base::Time()))
+                if (gps.position.time == gps.errors.time && (gps.position.time > last_update || last_update == base::Time()))
                 {
                     ++seq;
-                    last_update = gps.position.timestamp;
+                    last_update = gps.position.time;
                     cout << seq << " ";
                     DGPS::display(cout, gps) << " " << diff_count << endl;
                     diff_count = 0;

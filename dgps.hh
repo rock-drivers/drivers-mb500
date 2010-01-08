@@ -9,7 +9,6 @@
 #include <vector>
 #include "dgpstypes.hh"
 
-
 class DGPS : public IODriver {
 	public:
 		DGPS();

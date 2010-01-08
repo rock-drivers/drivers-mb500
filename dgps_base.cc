@@ -117,13 +117,13 @@ int main (int argc, const char** argv){
     while(true)
     {
         gps.collectPeriodicData();
-        if (gps.position.timestamp == gps.errors.timestamp && (gps.position.timestamp > last_update || last_update == base::Time()))
+        if (gps.position.time == gps.errors.time && (gps.position.time > last_update || last_update == base::Time()))
         {
 	    if (gps.position.positionType != gps::NO_SOLUTION && gps.position.positionType != gps::INVALID)
 	    {
                 if (first_solution.isNull())
                 {
-                    first_solution = gps.position.timestamp;
+                    first_solution = gps.position.time;
                     cerr << "first solution found, now waiting " << AVERAGING_TIME << " seconds." << endl;
                 }
                 pos[0] += gps.position.latitude;
@@ -132,11 +132,11 @@ int main (int argc, const char** argv){
                 ++count;
 	    }
 
-            last_update = gps.position.timestamp;
+            last_update = gps.position.time;
             DGPS::display(cerr, gps) << endl;
         }
 
-	if (!first_solution.isNull() && (gps.position.timestamp - first_solution) > base::Time(AVERAGING_TIME))
+	if (!first_solution.isNull() && (gps.position.time - first_solution) > base::Time(AVERAGING_TIME))
 	{
 	    cerr << "now setting base station position" << endl;
 	    break;

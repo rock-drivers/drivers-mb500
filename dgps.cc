@@ -544,7 +544,7 @@ SolutionQuality DGPS::interpretQuality(string const& message)
     split( fields, message, is_any_of(",*") );
 
     SolutionQuality data;
-    data.timestamp = base::Time::now();
+    data.time = base::Time::now();
     int sat_end = fields.size() - 4;
     for (int i = 3; i < sat_end; ++i)
     {
@@ -567,7 +567,7 @@ Errors DGPS::interpretErrors(string const& message)
     split( fields, message, is_any_of(",*") );
 
     Errors data;
-    data.timestamp = interpretTime(fields[1]);
+    data.time = interpretTime(fields[1]);
     data.deviationLatitude  = atof(fields[6].c_str());
     data.deviationLongitude = atof(fields[7].c_str());
     data.deviationAltitude  = atof(fields[8].c_str());
@@ -591,7 +591,7 @@ bool DGPS::interpretSatelliteInfo(SatelliteInfo& data, string const& message)
     if (msg_number == 1 && message.find("$GPGSV") == 0)
     {
         data.knownSatellites.clear();
-        data.timestamp = base::Time::now();
+        data.time = base::Time::now();
     }
 
     // Compute the number of satellites in this message
@@ -623,7 +623,7 @@ Position DGPS::interpretInfo(string const& message)
 
     Position data;
 
-    data.timestamp = interpretTime(fields[1]);
+    data.time = interpretTime(fields[1]);
     data.latitude  = interpretAngle(fields[2], fields[3] == "N");
     data.longitude = interpretAngle(fields[4], fields[5] == "E");
     int position_type = atoi(fields[6].c_str());
@@ -697,8 +697,8 @@ std::ostream& DGPS::display(std::ostream& io,
 	gps::SatelliteInfo const& satellites,
 	gps::SolutionQuality const& quality)
 {
-    time_t time_secs = pos.timestamp.toSeconds();
-    int time_msecs   = pos.timestamp.microseconds / 1000;
+    time_t time_secs = pos.time.toSeconds();
+    int time_msecs   = pos.time.microseconds / 1000;
 
     char* time_string = ctime(&time_secs);
     io
