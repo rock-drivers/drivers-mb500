@@ -9,7 +9,6 @@
 #include <vector>
 #include "dgpstypes.hh"
 
-
 class DGPS : public IODriver {
 	public:
 		DGPS();
@@ -147,7 +146,7 @@ class DGPS : public IODriver {
 		static gps::Position interpretInfo(std::string const& msg);
 		static bool interpretSatelliteInfo(gps::SatelliteInfo& data, std::string const& msg);
                 static double interpretAngle(std::string const& value, bool positive);
-                static DFKI::Time  interpretTime(std::string const& time);
+                static base::Time  interpretTime(std::string const& time);
 
 		std::string read(int timeout);
 		void write(const std::string&, int timeout);

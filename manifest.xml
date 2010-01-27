@@ -1,0 +1,15 @@
+<package>
+  <description brief="driver for the GPS boards using the PASH protocol">
+      This is a driver for GPS boards that use the PASH protocol. In particular,
+      it is used to drive a Magellan MB500 board, and includes functionality for
+      dGPS setups (correction sending through network, RTK-specific options).
+  </description>
+  <author>Sylvain Joyeux/sylvain.joyeux@dfki.de</author>
+  <copyright>
+      DFKI/robotik@dfki.de
+  </copyright>
+  <license>LGPL v2 or later</license>
+
+  <depend package="base" />
+  <depend package="drivers/iodrivers_base" />
+</package>

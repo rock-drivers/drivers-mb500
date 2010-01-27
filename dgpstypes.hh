@@ -5,7 +5,7 @@
 #include <vector>
 #endif
 
-#include <dfki/time.h>
+#include <base/time.h>
 
 namespace gps {
     enum GPS_SOLUTION_TYPES
@@ -46,7 +46,7 @@ namespace gps {
     };
 
     struct Solution {
-        DFKI::Time timestamp;
+        base::Time time;
         double latitude;
         double longitude;
         GPS_SOLUTION_TYPES positionType;
@@ -65,7 +65,7 @@ namespace gps {
     };
 
     struct Position {
-        DFKI::Time timestamp;
+        base::Time time;
         double latitude;
         double longitude;
         GPS_SOLUTION_TYPES positionType;
@@ -80,14 +80,14 @@ namespace gps {
     };
 
     struct Errors {
-        DFKI::Time timestamp;
+        base::Time time;
         double deviationLatitude;
         double deviationLongitude;
         double deviationAltitude;
     };
 
     struct SolutionQuality {
-        DFKI::Time timestamp;
+        base::Time time;
         std::vector<int> usedSatellites;
         double pdop;
         double hdop;
@@ -124,7 +124,7 @@ namespace gps {
     };
 
     struct SatelliteInfo {
-        DFKI::Time timestamp;
+        base::Time time;
         std::vector < gps::Satellite> knownSatellites;
     };
 }
