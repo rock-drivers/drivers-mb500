@@ -336,7 +336,7 @@ bool DGPS::setPosition(double latitude, double longitude, double height)
     stringstream aux;
     aux << "$PASHS,POS,"
 	<< setprecision(7) << fixed << deg2magellan(fabs(latitude))  << "," << (latitude > 0 ? 'N' : 'S') << ","
-	<< setprecision(7) << fixed << deg2magellan(fabs(longitude)) << "," << (longitude > 0 ? 'W' : 'E') << ","
+	<< setprecision(7) << fixed << deg2magellan(fabs(longitude)) << "," << (longitude > 0 ? 'E' : 'W') << ","
 	<< setprecision(4) << fixed << height
 	<< "\r\n";
     write(aux.str(), 1000);
