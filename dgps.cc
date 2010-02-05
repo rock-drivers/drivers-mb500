@@ -709,8 +709,8 @@ std::ostream& DGPS::display(std::ostream& io,
         << setprecision(10) << fixed << setw(13) << pos.longitude << " "
         << setprecision(2) << setw(7) << pos.altitude << " "
 	<< " | "
-        << setprecision(2) << setw(5) << errors.deviationLongitude << " "
         << setprecision(2) << setw(5) << errors.deviationLatitude << " "
+        << setprecision(2) << setw(5) << errors.deviationLongitude << " "
         << setprecision(2) << setw(5) << errors.deviationAltitude << " "
 	<< " | ";
 
