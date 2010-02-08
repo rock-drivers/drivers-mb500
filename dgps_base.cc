@@ -195,7 +195,7 @@ int main (int argc, const char** argv){
 	    float duration = (now - last_update).toSeconds();
 	    if (duration > 60)
 	    {
-		cerr << (bytes_tx / duration) << " b/m" << endl;
+		cerr << (bytes_tx) << " b/m" << endl;
 		bytes_tx = 0;
 		last_update = now;
 	    }
