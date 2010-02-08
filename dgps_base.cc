@@ -193,9 +193,9 @@ int main (int argc, const char** argv){
 	    bytes_tx += rd;
 	    base::Time now = base::Time::now();
 	    float duration = (now - last_update).toSeconds();
-	    if (duration > 1)
+	    if (duration > 60)
 	    {
-		cerr << (bytes_tx / duration) << " b/s" << endl;
+		cerr << (bytes_tx / duration) << " b/m" << endl;
 		bytes_tx = 0;
 		last_update = now;
 	    }
