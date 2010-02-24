@@ -801,13 +801,13 @@ std::ostream& DGPS::display(std::ostream& io,
         io << setw(12) << solutionNames[pos.positionType] << " ";
 
     io << setw(5) << setprecision(1) << quality.hdop << " ";
-    io << setw(2) << pos.noOfSatellites << ",";
+    io << setw(5) << pos.noOfSatellites << ",";
     { // count the number of satellites in use, per constellation
 	int sat_count = quality.usedSatellites.size();
 	int counts[3] = { 0, 0, 0 };
 	for (int i = 0; i < sat_count; ++i)
 	    counts[Satellite::getConstellationFromPRN(quality.usedSatellites[i])]++;
-	io << setw(2) << counts[0] << "/" << setw(2) << counts[1] << "/" << setw(2) << counts[2] << setw(6) << " ";
+	io << setw(2) << counts[0] << "/" << setw(2) << counts[1] << "/" << setw(2) << counts[2] << setw(3) << " ";
     }
 
     { // count the number of satellites in view, per constellation
