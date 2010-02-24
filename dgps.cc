@@ -769,7 +769,7 @@ std::ostream& DGPS::display(std::ostream& io, DGPS const& driver)
 
 std::ostream& DGPS::displayHeader(std::ostream& io)
 {
-    cout << "Time                          | Latitude      Longitude     Altitude | dLat   dLong  dAlt | Mode         PDOP  Used (Sum,GP/S/GL)   Tracked (Sum,GP/S/GL) | DiffAge" << std::endl;
+    cout << "Time                          | Latitude      Longitude         Alt (MSL+geoid)  | dLat   dLong  dAlt | Mode           PDOP    Used (Sum,GP/S/GL)   Tracked (Sum,GP/S/GL) | DiffAge" << std::endl;
     return io;
 }
 
@@ -788,7 +788,7 @@ std::ostream& DGPS::display(std::ostream& io,
 	<< " | "
         << setprecision(10) << fixed << setw(13) << pos.latitude << " "
         << setprecision(10) << fixed << setw(13) << pos.longitude << " "
-        << setprecision(2) << setw(7) << pos.altitude << " "
+        << setprecision(2) << setw(7) << pos.altitude << "+" << setprecision(2) << setw(7) << pos.geoidalSeparation << " "
 	<< " | "
         << setprecision(2) << setw(5) << errors.deviationLatitude << " "
         << setprecision(2) << setw(5) << errors.deviationLongitude << " "
