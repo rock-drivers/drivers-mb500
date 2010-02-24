@@ -134,7 +134,7 @@ int main (int argc, const char** argv){
 	cerr << "board reports: " << endl
             << "lat  " << setprecision(10) << fixed << gps.position.latitude << endl
             << "long " << setprecision(10) << fixed << gps.position.longitude << endl
-            << "alt  " << setprecision(2)  << fixed << gps.position.altitude << endl;
+            << "alt  " << setprecision(2)  << fixed << gps.position.altitude + gps.position.geoidalSeparation << endl;
 
 	DGPS::display(cout, gps);
     } else {
