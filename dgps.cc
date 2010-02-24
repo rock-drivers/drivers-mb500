@@ -366,8 +366,8 @@ bool DGPS::setGLONASSTracking(bool setting)
 
 bool DGPS::setSBASTracking(bool setting)
 {
-    if(setting) write("$PASHS,SBAS,ON\r\n",1000);
-    else write("$PASHS,SBAS,OFF\r\n", 1000);
+    if(setting) write("$PASHS,SBA,ON\r\n",1000);
+    else write("$PASHS,SBA,OFF\r\n", 1000);
     return verifyAcknowledge("SET SBAS TRACKING");
 }
 
