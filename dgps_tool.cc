@@ -1,6 +1,7 @@
 #include "dgps.hh"
 #include <iostream>
 #include <string>
+#include <boost/lexical_cast.hpp>
 using namespace std;
 
 void usage()
@@ -10,7 +11,7 @@ void usage()
 
 int main(int argc, char** argv)
 {
-    if (argc != 3)
+    if (argc < 3 || argc > 4)
     {
         usage();
         return 1;
@@ -44,6 +45,17 @@ int main(int argc, char** argv)
     {
         gps.resetStoredPosition();
         gps.setReceiverDynamics(gps::ADAPTIVE);
+    }
+    else if (command == "period")
+    {
+        if (argc != 4)
+        {
+            cerr << "missing period argument for 'dgps_tool period'" << endl;
+            usage();
+            return 1;
+        }
+
+        gps.setProcessingRate(boost::lexical_cast<int>(argv[3]));
     }
     else
         usage();
