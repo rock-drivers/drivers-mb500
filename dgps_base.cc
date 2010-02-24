@@ -117,13 +117,26 @@ int main (int argc, const char** argv){
 	pos[0] = boost::lexical_cast<double>(argv[5]);
 	pos[1] = boost::lexical_cast<double>(argv[6]);
 	pos[2] = boost::lexical_cast<double>(argv[7]);
-	cerr << "setting position to: lat=" << pos[0] << ", long=" << pos[1] << ", alt=" << pos[2] << endl;
+	cerr << "setting position to: "
+            << "lat  " << setprecision(10) << fixed << pos[0] << endl
+            << "long " << setprecision(10) << fixed << pos[1] << endl
+            << "alt  " << setprecision(2)  << fixed << pos[2] << endl;
+
+        base::Time current_timestamp = gps.position.time;
 	gps.setPosition(pos[0], pos[1], pos[2]);
-	for(int i = 0; i < 30; i++)
-	    gps.collectPeriodicData();
-	cerr << "board reports position : lat=" << gps.position.latitude << ", long=" << gps.position.longitude << ", alt=" << gps.position.altitude << endl;
+        while (true)
+        {
+            gps.collectPeriodicData();
+            if (current_timestamp != gps.position.time)
+                break;
+        }
+
+	cerr << "board reports: " << endl
+            << "lat  " << setprecision(10) << fixed << gps.position.latitude << endl
+            << "long " << setprecision(10) << fixed << gps.position.longitude << endl
+            << "alt  " << setprecision(2)  << fixed << gps.position.altitude << endl;
+
 	DGPS::display(cout, gps);
-	
     } else {
 	size_t count = 0;
 	double pos[3] = { 0, 0, 0 };
