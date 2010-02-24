@@ -32,15 +32,34 @@ int main(int argc, char** argv)
     else if (command == "warm-reset")
         gps.reset(false);
     else if (command == "status")
+    {
+        gps.stopPeriodicData();
         gps.dumpStatus();
+    }
     else if (command == "almanac")
+    {
+        gps.stopPeriodicData();
         gps.dumpAlmanac();
+    }
     else if (command == "satellites")
+    {
+        gps.stopPeriodicData();
         gps.dumpSatellites();
+    }
     else if (command == "edge")
         gps.setCodeCorrelatorMode(DGPS::EDGE_CORRELATOR);
     else if (command == "strobe")
         gps.setCodeCorrelatorMode(DGPS::STROBE_CORRELATOR);
+    else if (command == "fixed")
+    {
+        gps.setPositionFromCurrent();
+        gps.setReceiverDynamics(gps::STATIC);
+    }
+    else if (command == "static")
+    {
+        gps.resetStoredPosition();
+        gps.setReceiverDynamics(gps::STATIC);
+    }
     else if (command == "moving")
     {
         gps.resetStoredPosition();
