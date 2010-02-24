@@ -351,6 +351,12 @@ bool DGPS::setKnownPointInit(double latitude, string NorS, double longitude, str
     return verifyAcknowledge("SET INITIAL POSITION");
 }
 
+bool DGPS::setGNSSMode(gps::GNSS_MODE mode)
+{
+    write("$PASHS,GNS,CFG," + boost::lexical_cast<string>(mode) + "\r\n", 1000);
+    return verifyAcknowledge("SET GNSS MODE");
+}
+
 bool DGPS::setGLONASSTracking(bool setting)
 {
     if(setting) write("$PASHS,GLO,ON\r\n",1000);

@@ -85,6 +85,8 @@ class DGPS : public IODriver {
 		bool setGLONASSTracking(bool);
                 /** Enable/disable SBAS tracking */
 		bool setSBASTracking(bool);
+                /** Sets the acquisition mode */
+                bool setGNSSMode(gps::GNSS_MODE mode);
 
 		enum Special {
 			NONE = -1

@@ -45,6 +45,16 @@ namespace gps {
         USER_DEFINED = 9
     };
 
+    enum GNSS_MODE
+    {
+        GP_L1   = 0,
+        GPGL_L1 = 1,
+        GP_L2   = 2,
+        GP_L2CS = 3,
+        GPGL_L1L2 = 4,
+        GPGL_L1L2CS = 5
+    };
+
     struct Solution {
         base::Time time;
         double latitude;
