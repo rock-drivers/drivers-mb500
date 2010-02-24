@@ -73,6 +73,8 @@ class DGPS : public IODriver {
                  */
 		bool setKnownPointInit(double, std::string, double, std::string, double, double, double, double, std::string);
 
+                bool setProcessingRate(int rate);
+
                 /** Puts the receiver in moving mode, i.e. resets any stored
                  * position */
                 bool resetStoredPosition();
@@ -95,6 +97,8 @@ class DGPS : public IODriver {
 		bool setNMEA(std::string, std::string, bool, double = 1);
 		bool setNMEALL(std::string, bool);
 		bool verifyAcknowledge(std::string const& cmd = "");
+
+                std::string getBoardID();
 
 		/** Interprets a NMEA GST message and returns the unmarshalled
                  * GST structure
@@ -135,12 +139,15 @@ class DGPS : public IODriver {
 		void writeCorrectionData(char const* data, size_t size, int timeout);
 	protected:
                 float m_period;
+                int   m_acq_timeout;
+
                 // GSV and GSA information are multi-message, so we accumulate
                 // information in these temp attributes, and copy them to the
                 // real ones whenever the message cycle is finished. 
 		gps::SatelliteInfo tempSatellites;
                 gps::SolutionQuality tempSolutionQuality;
 
+                bool waitForBoardReset();
                 bool interpretQuality(std::string const& message);
 		static gps::Errors interpretErrors(std::string const& msg);
 		static gps::Position interpretInfo(std::string const& msg);

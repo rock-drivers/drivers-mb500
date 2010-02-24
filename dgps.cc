@@ -27,7 +27,7 @@ using namespace std;
 using namespace gps;
 using namespace boost;
 
-DGPS::DGPS() : IODriver(2048), m_period(1000)
+DGPS::DGPS() : IODriver(2048), m_period(1000), m_acq_timeout(2000)
 {
 }
 
@@ -56,6 +56,8 @@ bool DGPS::open(const string& filename)
         return false;
     }
 
+    setProcessingRate(10);
+
     stopPeriodicData();
     stopRTKBase();
     resetStoredPosition();
@@ -71,6 +73,40 @@ bool DGPS::openBase(std::string const& device_name)
         return false;
 
     return setReceiverDynamics(STATIC);
+}
+
+bool DGPS::waitForBoardReset()
+{
+    int old_acq = m_acq_timeout;
+    m_acq_timeout = 200;
+    base::Time reset_start = base::Time::now();
+    while((base::Time::now() - reset_start).toSeconds() < 10)
+    {
+        try
+        {
+            read(m_acq_timeout);
+            m_acq_timeout = old_acq;
+            return true;
+        }
+        catch(timeout_error) {}
+    }
+    m_acq_timeout = old_acq;
+    return false;
+}
+
+std::string DGPS::getBoardID()
+{
+    write("$PASHQ,RID\r\n", 1000);
+    std::string reply;
+    do {
+        reply = read(m_acq_timeout);
+        std::cerr << "replied " << reply << std::endl;
+    }
+    while(reply.find("$PASHR,RID") != 0);
+
+    vector<string> fields;
+    split( fields, reply, is_any_of(",*") );
+    return fields[1];
 }
 
 bool DGPS::openRover(std::string const& device_name)
@@ -98,6 +134,7 @@ void DGPS::reset(bool cold_start)
     else
         write("$PASHS,INI,9,9,5\r\n", 1000);
 
+    waitForBoardReset();
     stopPeriodicData();
 }
 
@@ -126,8 +163,25 @@ bool DGPS::setRTKInputPort(string const& port_name)
 string DGPS::read(int timeout)
 {
     char buffer[MAX_PACKET_SIZE];
-    size_t packet_size = readPacket(reinterpret_cast<uint8_t *>( buffer), MAX_PACKET_SIZE, timeout);
+    size_t packet_size = readPacket(reinterpret_cast<uint8_t *>( buffer), MAX_PACKET_SIZE, 5000, timeout);
     return string(buffer, packet_size);
+}
+
+bool DGPS::setProcessingRate(int rate)
+{
+    stringstream aux;
+    aux << rate;
+    write("$PASHS,POP," + aux.str() + "\r\n", 1000);
+    m_acq_timeout = 5000;
+    if (verifyAcknowledge("PROCESSING_RATE"))
+    {
+        m_acq_timeout = 2000 / rate;
+        if (m_acq_timeout < 500)
+            m_acq_timeout = 500;
+        waitForBoardReset();
+        return true;
+    }
+    return false;
 }
 
 void DGPS::dumpStatus()
@@ -150,7 +204,7 @@ void DGPS::dumpAlmanac()
     write("$PASHQ,ALM\r\n", 1000);
     while(true)
     {
-        string msg = read(10);
+        string msg = read(10000);
         if (msg.find("ALM") != string::npos)
             cout << msg << endl;
         else
@@ -477,11 +531,9 @@ bool DGPS::setNMEALL(string port, bool onOff)
 bool DGPS::verifyAcknowledge(std::string const& cmd)
 {
     string message;
-    do
-    {
-        message = read(1000);
-    }
+    do { message = read(m_acq_timeout); }
     while( message.find("$PASHR,NAK") != 0 && message.find("$PASHR,ACK") != 0);
+
     if( message.find("$PASHR,NAK") == 0) {
         cerr << "dpgs/mb500: command " << cmd << " not acknowledged" << endl;
         return false;
@@ -496,7 +548,7 @@ Errors DGPS::getGST(string port)
     if (port!= "") port = "," + port;
     write("$PASHQ,GST" + port + "\r\n", 1000);
 
-    string result = read(1000);
+    string result = read(m_acq_timeout);
     if( result.find("$PASHR,NAK") == 0) {
         cerr<<"Command not acknowledged"<<endl;
         throw runtime_error("Command not acknowledged");
@@ -510,7 +562,7 @@ Position DGPS::getGGA(string port)
     if (port!= "") port = "," + port;
     write("$PASHQ,GGA" + port + "\r\n", 1000);
 
-    result = read(1000);
+    result = read(m_acq_timeout);
     if( result.find("$PASHR,NAK") == 0) {
         cerr<<"Command not acknowledged"<<endl;
         throw runtime_error("Command not acknowledged");
@@ -528,7 +580,7 @@ SatelliteInfo DGPS::getGSV(string port)
     SatelliteInfo data;
     while(true)
     {
-        msg = read(1000);
+        msg = read(m_acq_timeout);
         if( msg.find("$PASHR,NAK") == 0) {
             cerr<<"Command not acknowledged"<<endl;
             throw runtime_error("Command not acknowledged");

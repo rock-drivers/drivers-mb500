@@ -21,6 +21,7 @@ int main (int argc, const char** argv){
     if(!gps.open(device_name))
         return 1;
 
+    gps.setProcessingRate(1);
     gps.setPeriodicData(port_name, 1);
     cout << "DGPS board initialized" << endl;
     DGPS::displayHeader(cout);
