@@ -133,9 +133,13 @@ class DGPS : public IODriver {
 		void writeCorrectionData(char const* data, size_t size, int timeout);
 	protected:
                 float m_period;
+                // GSV and GSA information are multi-message, so we accumulate
+                // information in these temp attributes, and copy them to the
+                // real ones whenever the message cycle is finished. 
 		gps::SatelliteInfo tempSatellites;
+                gps::SolutionQuality tempSolutionQuality;
 
-                static gps::SolutionQuality interpretQuality(std::string const& message);
+                bool interpretQuality(std::string const& message);
 		static gps::Errors interpretErrors(std::string const& msg);
 		static gps::Position interpretInfo(std::string const& msg);
 		static bool interpretSatelliteInfo(gps::SatelliteInfo& data, std::string const& msg);

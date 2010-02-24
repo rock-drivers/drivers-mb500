@@ -451,7 +451,7 @@ void DGPS::collectPeriodicData()
     else if( message.find("$GPGST,") == 0 || message.find("$GLGST,") == 0 || message.find("$GNGST,") == 0)
         this->errors = interpretErrors(message);
     else if( message.find("$GPGSA,") == 0 || message.find("$GLGSA,") == 0 || message.find("$GNGSA,") == 0 )
-        this->solutionQuality = interpretQuality(message);
+        interpretQuality(message);
     else if( message.find("$GPGSV,") == 0 || message.find("$GLGSV,") == 0)
     {
         if (interpretSatelliteInfo(tempSatellites, message))
@@ -535,7 +535,7 @@ SatelliteInfo DGPS::getGSV(string port)
     }
 }
 
-SolutionQuality DGPS::interpretQuality(string const& message)
+bool DGPS::interpretQuality(string const& message)
 {
     if( message.find("$GPGSA,") != 0 && message.find("$GLGSA,") != 0 && message.find("$GNGSA,") != 0)
         throw std::runtime_error("wrong message given to interpretErrors");
@@ -543,19 +543,33 @@ SolutionQuality DGPS::interpretQuality(string const& message)
     vector<string> fields;
     split( fields, message, is_any_of(",*") );
 
-    SolutionQuality data;
-    data.time = base::Time::now();
+    std::vector<int> satellites;
     int sat_end = fields.size() - 4;
     for (int i = 3; i < sat_end; ++i)
     {
         if (fields[i] != "")
-            data.usedSatellites.push_back( atoi(fields[i].c_str()) );
+            satellites.push_back( atoi(fields[i].c_str()) );
     }
 
-    data.pdop = atof(fields[sat_end].c_str());
-    data.hdop = atof(fields[sat_end + 1].c_str());
-    data.vdop = atof(fields[sat_end + 2].c_str());
-    return data;
+    // There is no message count in the GSA messages, so we need to do
+    // otherwise. We check if the message is empty (no satellites) and/or if the
+    // first PRN of the new message is going backwards (lower than the last PRN
+    // of the current tempQuality attribute).
+    bool ret = false;
+    if (satellites.empty() || (!tempSolutionQuality.usedSatellites.empty() && tempSolutionQuality.usedSatellites.back() > satellites.front()))
+    {
+        solutionQuality     = tempSolutionQuality;
+        tempSolutionQuality = SolutionQuality();
+        tempSolutionQuality.time = base::Time::now();
+        ret = true;
+    }
+
+    tempSolutionQuality.usedSatellites.insert(tempSolutionQuality.usedSatellites.end(),
+            satellites.begin(), satellites.end());
+    tempSolutionQuality.pdop = atof(fields[sat_end].c_str());
+    tempSolutionQuality.hdop = atof(fields[sat_end + 1].c_str());
+    tempSolutionQuality.vdop = atof(fields[sat_end + 2].c_str());
+    return ret;
 }
 
 Errors DGPS::interpretErrors(string const& message)
