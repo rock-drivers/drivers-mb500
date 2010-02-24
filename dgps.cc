@@ -708,7 +708,7 @@ std::ostream& DGPS::display(std::ostream& io, DGPS const& driver)
 
 std::ostream& DGPS::displayHeader(std::ostream& io)
 {
-    cout << "Time                          | Latitude      Longitude     Altitude | dLat   dLong  dAlt | Mode      PDOP    Used   Tracked | DiffAge" << std::endl;
+    cout << "Time                          | Latitude      Longitude     Altitude | dLat   dLong  dAlt | Mode         PDOP  Used (Sum,GP/S/GL)   Tracked (Sum,GP/S/GL) | DiffAge" << std::endl;
     return io;
 }
 
@@ -735,18 +735,18 @@ std::ostream& DGPS::display(std::ostream& io,
 	<< " | ";
 
     if (pos.positionType > MAX_SOLUTION_ID)
-        io << setw(10) << "UNDEFINED=" << (int)pos.positionType << " ";
+        io << setw(12) << "UNDEFINED=" << (int)pos.positionType << " ";
     else
-        io << setw(10) << solutionNames[pos.positionType] << " ";
+        io << setw(12) << solutionNames[pos.positionType] << " ";
 
-    io << setw(4) << setprecision(1) << quality.hdop << " ";
-    io << setw(2) << pos.noOfSatellites << " ";
+    io << setw(5) << setprecision(1) << quality.hdop << " ";
+    io << setw(2) << pos.noOfSatellites << ",";
     { // count the number of satellites in use, per constellation
 	int sat_count = quality.usedSatellites.size();
 	int counts[3] = { 0, 0, 0 };
 	for (int i = 0; i < sat_count; ++i)
 	    counts[Satellite::getConstellationFromPRN(quality.usedSatellites[i])]++;
-	io << setw(2) << counts[0] << "/" << setw(2) << counts[2] << " ";
+	io << setw(2) << counts[0] << "/" << setw(2) << counts[1] << "/" << setw(2) << counts[2] << setw(6) << " ";
     }
 
     { // count the number of satellites in view, per constellation
@@ -758,7 +758,7 @@ std::ostream& DGPS::display(std::ostream& io,
 	    if (sat.SNR > 0)
 		counts[sat.getConstellation()]++;
 	}
-	io << setw(2) << counts[0] << "/" << setw(2) << counts[2] << " ";
+	io << setw(2) << counts[0] << "/" << setw(2) << counts[1] << "/" << setw(2) << counts[2] << " ";
     }
 
     io << " | " << pos.ageOfDifferentialCorrections;
