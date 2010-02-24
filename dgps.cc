@@ -56,8 +56,6 @@ bool DGPS::open(const string& filename)
         return false;
     }
 
-    setProcessingRate(10);
-
     stopPeriodicData();
     stopRTKBase();
     resetStoredPosition();
