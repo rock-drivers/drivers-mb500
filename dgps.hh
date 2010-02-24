@@ -14,8 +14,8 @@ class DGPS : public IODriver {
 		DGPS();
 		~DGPS();
 
+                bool openSerial(std::string const& device_name);
 		bool open(const std::string& device_name);
-
                 bool openBase(const std::string& device_name);
                 bool openRover(const std::string& device_name);
 
@@ -82,6 +82,8 @@ class DGPS : public IODriver {
 		bool setPosition(double latitude, double longitude, double height);
 		/** Fixes the receiver position to the currently estimated one */
 		bool setPositionFromCurrent();
+
+                void disableAllOutputs();
 
                 /** Enable/disable GLONASS tracking */
 		bool setGLONASSTracking(bool);

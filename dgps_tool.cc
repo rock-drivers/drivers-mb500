@@ -21,7 +21,7 @@ int main(int argc, char** argv)
     string command = argv[2];
 
     DGPS gps;
-    if (!gps.open(device))
+    if (!gps.openSerial(device))
     {
         cerr << "cannot open " << device << endl;
         return 1;

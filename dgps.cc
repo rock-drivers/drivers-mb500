@@ -36,7 +36,7 @@ DGPS::~DGPS()
     if (isValid()) close();
 }
 
-bool DGPS::open(const string& filename)
+bool DGPS::openSerial(std::string const& filename)
 {
     if( !IODriver::openSerial(filename, 115200))
     {
@@ -56,12 +56,17 @@ bool DGPS::open(const string& filename)
         return false;
     }
 
-    stopPeriodicData();
-    stopRTKBase();
-    resetStoredPosition();
-    setGLONASSTracking(true);
-    setCodeCorrelatorMode(STROBE_CORRELATOR);
+    disableAllOutputs();
+    return true;
+}
 
+
+bool DGPS::open(const string& filename)
+{
+    if (!openSerial(filename))
+        return false;
+
+    resetStoredPosition();
     return true;
 }
 
@@ -71,6 +76,12 @@ bool DGPS::openBase(std::string const& device_name)
         return false;
 
     return setReceiverDynamics(STATIC);
+}
+
+void DGPS::disableAllOutputs()
+{
+    stopPeriodicData();
+    stopRTKBase();
 }
 
 bool DGPS::waitForBoardReset()
