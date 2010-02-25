@@ -501,6 +501,8 @@ bool DGPS::setPeriodicData(std::string const& port, double period)
 
     if(! setNMEA("GGA", port, true, period)) return 0;
     if(! setNMEA("GST", port, true, period)) return 0;
+    if(! setNMEA("ZDA", port, true, period)) return 0;
+    if(! setNMEA("LTN", port, true, period)) return 0;
     if(! setNMEA("GSA", port, true, stats_period)) return 0;
     if(! setNMEA("GSV", port, true, stats_period)) return 0;
     return 1;
@@ -521,10 +523,20 @@ void DGPS::collectPeriodicData()
         this->errors = interpretErrors(message);
     else if( message.find("$GPGSA,") == 0 || message.find("$GLGSA,") == 0 || message.find("$GNGSA,") == 0 )
         interpretQuality(message);
+    else if( message.find("$GPZDA,") == 0)
+    {
+        pair<base::Time, base::Time> times = interpretDateTime(message);
+        cpu_time  = times.first;
+        real_time = times.second;
+    }
     else if( message.find("$GPGSV,") == 0 || message.find("$GLGSV,") == 0)
     {
         if (interpretSatelliteInfo(tempSatellites, message))
             satellites = tempSatellites;
+    }
+    else if ( message.find("$PASHR,LTN,") == 0 )
+    {
+        processing_latency = interpretLatency(message);
     }
 }
 
@@ -600,6 +612,20 @@ SatelliteInfo DGPS::getGSV(string port)
                 return data;
         }
     }
+}
+
+pair<base::Time, base::Time> DGPS::interpretDateTime(string const& message)
+{
+    if( message.find("$GPZDA,"))
+        throw std::runtime_error("wrong message given to interpretErrors");
+
+    base::Time cpu_time = base::Time::now();
+
+    vector<string> fields;
+    split( fields, message, is_any_of(",*") );
+
+    base::Time utc = interpretTime(fields[1]);
+    return make_pair(cpu_time, utc);
 }
 
 bool DGPS::interpretQuality(string const& message)
@@ -717,6 +743,16 @@ Position DGPS::interpretInfo(string const& message)
     data.geoidalSeparation = atof(fields[11].c_str());
     data.ageOfDifferentialCorrections = atof(fields[13].c_str());
     return data;
+}
+
+double DGPS::interpretLatency(std::string const& message)
+{
+    if( !message.find("$PASHR,LTN,") == 0)
+        throw std::runtime_error("invalid message in interpretInfo");
+
+    vector<string> fields;
+    split( fields, message, is_any_of(",*") );
+    return lexical_cast<double>(fields[2]) / 1000;
 }
 
 double DGPS::interpretAngle(std::string const& value, bool positive)

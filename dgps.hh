@@ -138,6 +138,10 @@ class DGPS : public IODriver {
 		gps::SatelliteInfo satellites;
                 gps::SolutionQuality solutionQuality;
 
+                base::Time cpu_time;
+                base::Time real_time;
+                double processing_latency;
+
 		void writeCorrectionData(char const* data, size_t size, int timeout);
 	protected:
                 float m_period;
@@ -151,8 +155,10 @@ class DGPS : public IODriver {
 
                 bool waitForBoardReset();
                 bool interpretQuality(std::string const& message);
+                static std::pair<base::Time, base::Time> interpretDateTime(std::string const& msg);
 		static gps::Errors interpretErrors(std::string const& msg);
 		static gps::Position interpretInfo(std::string const& msg);
+                static double interpretLatency(std::string const& message);
 		static bool interpretSatelliteInfo(gps::SatelliteInfo& data, std::string const& msg);
                 static double interpretAngle(std::string const& value, bool positive);
                 static base::Time  interpretTime(std::string const& time);
