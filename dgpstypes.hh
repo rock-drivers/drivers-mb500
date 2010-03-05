@@ -54,7 +54,13 @@ namespace gps {
         GPGL_L1L2 = 4,
         GPGL_L1L2CS = 5
     };
-
+    
+    struct Time { 
+      base::Time cpu_time; 
+      base::Time gps_time; 
+      double processing_latency;
+    };
+    
     struct Solution {
         base::Time time;
         double latitude;
