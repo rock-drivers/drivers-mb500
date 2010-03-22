@@ -45,6 +45,14 @@ namespace gps {
         USER_DEFINED = 9
     };
 
+    enum AMBIGUITY_THRESHOLD
+    {
+        NO_FIX     = 0,
+        FIX_95_0 = 1,
+        FIX_99_0 = 2,
+        FIX_99_9 = 3
+    };
+
     enum GNSS_MODE
     {
         GP_L1   = 0,

@@ -83,6 +83,11 @@ class DGPS : public IODriver {
 		/** Fixes the receiver position to the currently estimated one */
 		bool setPositionFromCurrent();
 
+                /** Set the ambiguity threshold above which the RTK engine will
+                 * switch to FIX
+                 */
+                bool setFixThreshold(gps::AMBIGUITY_THRESHOLD threshold);
+
                 void disableAllOutputs();
 
                 /** Enable/disable GLONASS tracking */

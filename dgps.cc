@@ -491,6 +491,20 @@ bool DGPS::setNMEA(string command, string port, bool onOff, double outputRate)
     return verifyAcknowledge("NMEA OUTPUT " + command + " " + (onOff ? "ON" : "OFF") + " " + rate);
 }
 
+bool DGPS::setFixThreshold(AMBIGUITY_THRESHOLD threshold)
+{
+    std::string value;
+    switch(threshold)
+    {
+        case NO_FIX: value = "0"; break;
+        case FIX_95_0: value = "95.0"; break;
+        case FIX_99_0: value = "99.0"; break;
+        case FIX_99_9: value = "99.9"; break;
+    };
+    write("$PASHS,CPD,AFP," + value + "\r\n", 1000);
+    return verifyAcknowledge("FIX THRESHOLD " + value);
+}
+
 bool DGPS::setPeriodicData(std::string const& port, double period)
 {
     m_period = period * 1000;
