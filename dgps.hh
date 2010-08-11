@@ -148,6 +148,16 @@ class DGPS : public IODriver {
                 double processing_latency;
 
 		void writeCorrectionData(char const* data, size_t size, int timeout);
+
+		/** Enable ntpd updates through its shm reference clock driver
+		 * this needs a line like this in ntp.conf:
+		 * server 127.127.28.unit
+		 * where unit can be 0-3, with 0,1 being root-writable and 2,3
+		 * being world-writable
+		 *
+		 * @returns true if the shm area was found
+		 */
+		bool enableNtpdShm(int unit);
 	protected:
                 float m_period;
                 int   m_acq_timeout;

@@ -54,17 +54,6 @@ struct shmTime {
 DGPS::DGPS() : IODriver(2048), m_period(1000), m_acq_timeout(2000)
 	     , ntp_shm(NULL)
 {
-    key_t k = 0x4e545032; //"NTP2"
-    ntp_shmid = shmget(k,sizeof(struct shmTime),0);
-    if (ntp_shmid >= 0) {
-	ntp_shm = shmat(ntp_shmid,NULL,0);
-
-	volatile struct shmTime *st = (volatile struct shmTime *)ntp_shm;
-
-	st->valid = 0;
-	st->mode = 1;
-	st->count = 0;
-    }
 }
 
 DGPS::~DGPS()
@@ -559,8 +548,27 @@ bool DGPS::setPeriodicData(std::string const& port, double period)
     return 1;
 }
 
+bool DGPS::enableNtpdShm(int unit) {
+    key_t k = 0x4e545030+unit; //"NTP0"-"NTP3"
+    ntp_shmid = shmget(k,sizeof(struct shmTime),0);
+    if (ntp_shmid >= 0) {
+	ntp_shm = shmat(ntp_shmid,NULL,0);
+
+	volatile struct shmTime *st = (volatile struct shmTime *)ntp_shm;
+
+	st->valid = 0;
+	st->mode = 1;
+	st->count = 0;
+	return true;
+    }
+    return false;
+}
+
 void DGPS::updateNtpdShm()
 {
+    if (!ntp_shm)
+	return;
+
     volatile struct shmTime *st = (volatile struct shmTime *)ntp_shm;
 
     st->valid = 0;
