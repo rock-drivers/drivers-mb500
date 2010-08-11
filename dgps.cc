@@ -16,6 +16,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 
 #include <termios.h>
 #include <unistd.h>
@@ -27,13 +29,48 @@ using namespace std;
 using namespace gps;
 using namespace boost;
 
+struct shmTime {
+  int    mode; /* 0 - if valid set
+                *       use values,
+                *       clear valid
+                * 1 - if valid set
+                *       if count before and after read of
+                *       values is equal,
+                *         use values
+                *       clear valid
+                */
+  int    count;
+  time_t clockTimeStampSec;      /* external clock */
+  int    clockTimeStampUSec;     /* external clock */
+  time_t receiveTimeStampSec;    /* internal clock, when external value was received */
+  int    receiveTimeStampUSec;   /* internal clock, when external value was received */
+  int    leap;
+  int    precision;
+  int    nsamples;
+  int    valid;
+  int    dummy[10];
+};
+
 DGPS::DGPS() : IODriver(2048), m_period(1000), m_acq_timeout(2000)
+	     , ntp_shm(NULL)
 {
+    key_t k = 0x4e545032; //"NTP2"
+    ntp_shmid = shmget(k,sizeof(struct shmTime),0);
+    if (ntp_shmid >= 0) {
+	ntp_shm = shmat(ntp_shmid,NULL,0);
+
+	volatile struct shmTime *st = (volatile struct shmTime *)ntp_shm;
+
+	st->valid = 0;
+	st->mode = 1;
+	st->count = 0;
+    }
 }
 
 DGPS::~DGPS()
 {
     if (isValid()) close();
+    shmdt(ntp_shm);
 }
 
 bool DGPS::openSerial(std::string const& filename)
@@ -522,6 +559,24 @@ bool DGPS::setPeriodicData(std::string const& port, double period)
     return 1;
 }
 
+void DGPS::updateNtpdShm()
+{
+    volatile struct shmTime *st = (volatile struct shmTime *)ntp_shm;
+
+    st->valid = 0;
+    st->count++;
+    st->clockTimeStampSec = real_time.seconds;
+    st->clockTimeStampUSec = real_time.microseconds;
+    st->receiveTimeStampSec = cpu_time.seconds;
+    st->receiveTimeStampUSec = cpu_time.microseconds;
+    st->leap = 0;
+    /* from gpsd:
+     * precision is a placebo, ntpd does not really use it */
+    st->precision = -1000000;
+    st->count++;
+    st->valid = 1;
+}
+
 void DGPS::collectPeriodicData()
 {
     string message;
@@ -542,6 +597,8 @@ void DGPS::collectPeriodicData()
         pair<base::Time, base::Time> times = interpretDateTime(message);
         cpu_time  = times.first;
         real_time = times.second;
+
+	updateNtpdShm();
     }
     else if( message.find("$GPGSV,") == 0 || message.find("$GLGSV,") == 0)
     {

@@ -152,6 +152,9 @@ class DGPS : public IODriver {
                 float m_period;
                 int   m_acq_timeout;
 
+                int ntp_shmid;
+                void *ntp_shm;
+
                 // GSV and GSA information are multi-message, so we accumulate
                 // information in these temp attributes, and copy them to the
                 // real ones whenever the message cycle is finished. 
@@ -167,6 +170,8 @@ class DGPS : public IODriver {
 		static bool interpretSatelliteInfo(gps::SatelliteInfo& data, std::string const& msg);
                 static double interpretAngle(std::string const& value, bool positive);
                 static base::Time  interpretTime(std::string const& time);
+
+                void updateNtpdShm();
 
 		std::string read(int timeout);
 		void write(const std::string&, int timeout);
