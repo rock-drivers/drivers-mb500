@@ -29,6 +29,7 @@ using namespace std;
 using namespace gps;
 using namespace boost;
 
+/* struct used in communication with the ntpd */
 struct shmTime {
   int    mode; /* 0 - if valid set
                 *       use values,
@@ -51,8 +52,8 @@ struct shmTime {
   int    dummy[10];
 };
 
-DGPS::DGPS() : IODriver(2048), m_period(1000), m_acq_timeout(2000)
-	     , ntp_shm(NULL)
+DGPS::DGPS() : IODriver(2048), processing_latency(0)
+	     , m_period(1000), m_acq_timeout(2000), ntp_shm(NULL)
 {
 }
 
@@ -592,7 +593,18 @@ void DGPS::collectPeriodicData()
     catch(timeout_error)
     { return; }
 
-    if( message.find("$GPGGA,") == 0 )
+    if( message.find("$GPZDA,") == 0 )
+    {
+        pair<base::Time, base::Time> times = interpretDateTime(message);
+	//cpu_time adjusted for processing latency in the dgps board
+	//there is still some latency on the pc side, which is much
+	//noisier, but the baseline is constant after this.
+        cpu_time  = times.first - base::Time(0,processing_latency);
+        real_time = times.second;
+
+	updateNtpdShm();
+    }
+    else if( message.find("$GPGGA,") == 0 )
         this->position = interpretInfo(message);
     else if( message.find("$PASHR,VEC,") == 0 )
         cerr << message << endl;
@@ -600,14 +612,6 @@ void DGPS::collectPeriodicData()
         this->errors = interpretErrors(message);
     else if( message.find("$GPGSA,") == 0 || message.find("$GLGSA,") == 0 || message.find("$GNGSA,") == 0 )
         interpretQuality(message);
-    else if( message.find("$GPZDA,") == 0)
-    {
-        pair<base::Time, base::Time> times = interpretDateTime(message);
-        cpu_time  = times.first;
-        real_time = times.second;
-
-	updateNtpdShm();
-    }
     else if( message.find("$GPGSV,") == 0 || message.find("$GLGSV,") == 0)
     {
         if (interpretSatelliteInfo(tempSatellites, message))
@@ -695,10 +699,10 @@ SatelliteInfo DGPS::getGSV(string port)
 
 pair<base::Time, base::Time> DGPS::interpretDateTime(string const& message)
 {
+    base::Time cpu_time = base::Time::now();
+
     if( message.find("$GPZDA,"))
         throw std::runtime_error("wrong message given to interpretErrors");
-
-    base::Time cpu_time = base::Time::now();
 
     vector<string> fields;
     split( fields, message, is_any_of(",*") );
