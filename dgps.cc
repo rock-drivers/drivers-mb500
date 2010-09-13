@@ -599,7 +599,7 @@ void DGPS::collectPeriodicData()
 	//cpu_time adjusted for processing latency in the dgps board
 	//there is still some latency on the pc side, which is much
 	//noisier, but the baseline is constant after this.
-        cpu_time  = times.first - base::Time(0,processing_latency);
+        cpu_time  = times.first - base::Time(0,processing_latency*1000000);
         real_time = times.second;
 
 	updateNtpdShm();
