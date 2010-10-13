@@ -574,10 +574,12 @@ void DGPS::updateNtpdShm()
 
     st->valid = 0;
     st->count++;
-    st->clockTimeStampSec = real_time.seconds;
-    st->clockTimeStampUSec = real_time.microseconds;
-    st->receiveTimeStampSec = cpu_time.seconds;
-    st->receiveTimeStampUSec = cpu_time.microseconds;
+    timeval split = real_time.toTimeval();
+    st->clockTimeStampSec    = split.tv_sec;
+    st->clockTimeStampUSec   = split.tv_usec;
+    split = cpu_time.toTimeval();
+    st->receiveTimeStampSec  = split.tv_sec;
+    st->receiveTimeStampUSec = split.tv_usec;
     st->leap = 0;
     /* from gpsd:
      * precision is a placebo, ntpd does not really use it */
@@ -599,7 +601,7 @@ void DGPS::collectPeriodicData()
 	//cpu_time adjusted for processing latency in the dgps board
 	//there is still some latency on the pc side, which is much
 	//noisier, but the baseline is constant after this.
-        cpu_time  = times.first - base::Time(0,processing_latency*1000000);
+        cpu_time  = times.first - base::Time::fromSeconds(processing_latency);
         real_time = times.second;
 
 	updateNtpdShm();
@@ -866,7 +868,7 @@ base::Time DGPS::interpretTime(std::string const& time)
 
     // And convert it back to seconds since epoch
     time_t gps_epoch = timegm(&utc_hms);
-    base::Time result = base::Time(gps_epoch, microsecs);
+    base::Time result = base::Time::fromSeconds(gps_epoch, microsecs);
     return result;
 }
 

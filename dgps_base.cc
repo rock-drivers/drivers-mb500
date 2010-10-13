@@ -162,7 +162,7 @@ int main (int argc, const char** argv){
 		DGPS::display(cerr, gps) << endl;
 	    }
 
-	    if (!first_solution.isNull() && (gps.position.time - first_solution) > base::Time(AVERAGING_TIME))
+	    if (!first_solution.isNull() && (gps.position.time - first_solution) > base::Time::fromSeconds(AVERAGING_TIME))
 	    {
 		cerr << "now setting base station position" << endl;
 		break;
