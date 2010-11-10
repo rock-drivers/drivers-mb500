@@ -1,4 +1,4 @@
-#include "dgps.hh"
+#include "mb500.hh"
 #include <iostream>
 #include <sys/time.h>
 #include <time.h>
@@ -60,7 +60,7 @@ int openSocket(std::string const& hostname, std::string const& port)
 static const int AVERAGING_TIME     = 10;
 static const int AVERAGING_SAMPLING = 1;
 int main (int argc, const char** argv){
-    DGPS gps;
+    gps::MB500 gps;
 
     if (argc != 4 && argc != 5 && argc != 8)
     {
@@ -108,8 +108,8 @@ int main (int argc, const char** argv){
 
 
     gps.setPeriodicData(current_port, AVERAGING_SAMPLING);
-    cerr << "DGPS board initialized" << endl;
-    DGPS::displayHeader(cerr);
+    cerr << "MB500 board initialized" << endl;
+    gps::MB500::displayHeader(cerr);
     base::Time last_update, first_solution;
 
     if(argc == 8) {
@@ -136,7 +136,7 @@ int main (int argc, const char** argv){
             << "long " << setprecision(10) << fixed << gps.position.longitude << endl
             << "alt  " << setprecision(2)  << fixed << gps.position.altitude + gps.position.geoidalSeparation << endl;
 
-	DGPS::display(cout, gps);
+        gps::MB500::display(cout, gps);
     } else {
 	size_t count = 0;
 	double pos[3] = { 0, 0, 0 };
@@ -159,7 +159,7 @@ int main (int argc, const char** argv){
 		}
 
 		last_update = gps.position.time;
-		DGPS::display(cerr, gps) << endl;
+                gps::MB500::display(cerr, gps) << endl;
 	    }
 
 	    if (!first_solution.isNull() && (gps.position.time - first_solution) > base::Time::fromSeconds(AVERAGING_TIME))

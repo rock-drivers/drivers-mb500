@@ -1,4 +1,4 @@
-#include "dgps.hh"
+#include "mb500.hh"
 #include <iostream>
 #include <string>
 #include <boost/lexical_cast.hpp>
@@ -20,7 +20,7 @@ int main(int argc, char** argv)
     string device  = argv[1];
     string command = argv[2];
 
-    DGPS gps;
+    gps::MB500 gps;
     if (!gps.openSerial(device))
     {
         cerr << "cannot open " << device << endl;
@@ -47,9 +47,9 @@ int main(int argc, char** argv)
         gps.dumpSatellites();
     }
     else if (command == "edge")
-        gps.setCodeCorrelatorMode(DGPS::EDGE_CORRELATOR);
+        gps.setCodeCorrelatorMode(gps::MB500::EDGE_CORRELATOR);
     else if (command == "strobe")
-        gps.setCodeCorrelatorMode(DGPS::STROBE_CORRELATOR);
+        gps.setCodeCorrelatorMode(gps::MB500::STROBE_CORRELATOR);
     else if (command == "fixed")
     {
         gps.setPositionFromCurrent();

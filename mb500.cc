@@ -1,4 +1,4 @@
-#include "dgps.hh"
+#include "mb500.hh"
 
 #include <math.h>
 #include <string.h>
@@ -52,18 +52,18 @@ struct shmTime {
   int    dummy[10];
 };
 
-DGPS::DGPS() : IODriver(2048), processing_latency(0)
+MB500::MB500() : IODriver(2048), processing_latency(0)
 	     , m_period(1000), m_acq_timeout(2000), ntp_shm(NULL)
 {
 }
 
-DGPS::~DGPS()
+MB500::~MB500()
 {
     if (isValid()) close();
     shmdt(ntp_shm);
 }
 
-bool DGPS::openSerial(std::string const& filename)
+bool MB500::openSerial(std::string const& filename)
 {
     if( !IODriver::openSerial(filename, 115200))
     {
@@ -88,7 +88,7 @@ bool DGPS::openSerial(std::string const& filename)
 }
 
 
-bool DGPS::open(const string& filename)
+bool MB500::open(const string& filename)
 {
     if (!openSerial(filename))
         return false;
@@ -97,7 +97,7 @@ bool DGPS::open(const string& filename)
     return true;
 }
 
-bool DGPS::openBase(std::string const& device_name)
+bool MB500::openBase(std::string const& device_name)
 {
     if (!open(device_name))
         return false;
@@ -105,13 +105,13 @@ bool DGPS::openBase(std::string const& device_name)
     return setReceiverDynamics(STATIC);
 }
 
-void DGPS::disableAllOutputs()
+void MB500::disableAllOutputs()
 {
     stopPeriodicData();
     stopRTKBase();
 }
 
-bool DGPS::waitForBoardReset()
+bool MB500::waitForBoardReset()
 {
     int old_acq = m_acq_timeout;
     m_acq_timeout = 200;
@@ -130,7 +130,7 @@ bool DGPS::waitForBoardReset()
     return false;
 }
 
-std::string DGPS::getBoardID()
+std::string MB500::getBoardID()
 {
     write("$PASHQ,RID\r\n", 1000);
     std::string reply;
@@ -145,7 +145,7 @@ std::string DGPS::getBoardID()
     return fields[1];
 }
 
-bool DGPS::openRover(std::string const& device_name)
+bool MB500::openRover(std::string const& device_name)
 {
     if (!open(device_name))
         return false;
@@ -153,7 +153,7 @@ bool DGPS::openRover(std::string const& device_name)
     return setReceiverDynamics(ADAPTIVE);
 }
 
-bool DGPS::setUserDynamics(int h_vel, int h_acc, int v_vec, int v_acc)
+bool MB500::setUserDynamics(int h_vel, int h_acc, int v_vec, int v_acc)
 {
     write("$PASHS,UDP," +
 	    boost::lexical_cast<string>(h_vel) + "," +
@@ -163,7 +163,7 @@ bool DGPS::setUserDynamics(int h_vel, int h_acc, int v_vec, int v_acc)
     return verifyAcknowledge("USER DYNAMICS");
 }
 
-void DGPS::reset(bool cold_start)
+void MB500::reset(bool cold_start)
 {
     if (cold_start)
         write("$PASHS,INI,9,9,1\r\n", 1000);
@@ -174,7 +174,7 @@ void DGPS::reset(bool cold_start)
     stopPeriodicData();
 }
 
-bool DGPS::stopPeriodicData()
+bool MB500::stopPeriodicData()
 {
     if(! setNMEALL("A", false)) return false;
     if(! setNMEALL("B", false)) return false;
@@ -182,13 +182,13 @@ bool DGPS::stopPeriodicData()
     return true;
 }
 
-bool DGPS::close()
+bool MB500::close()
 {
     IODriver::close();
     return true;
 }
 
-bool DGPS::setRTKInputPort(string const& port_name)
+bool MB500::setRTKInputPort(string const& port_name)
 {
     stringstream aux;
     aux << "$PASHS,DIF,PRT," << port_name << ",RT3\r\n";
@@ -196,14 +196,14 @@ bool DGPS::setRTKInputPort(string const& port_name)
     return verifyAcknowledge("RTK INPUT PORT");
 }
 
-string DGPS::read(int timeout)
+string MB500::read(int timeout)
 {
     char buffer[MAX_PACKET_SIZE];
     size_t packet_size = readPacket(reinterpret_cast<uint8_t *>( buffer), MAX_PACKET_SIZE, 5000, timeout);
     return string(buffer, packet_size);
 }
 
-bool DGPS::setProcessingRate(int rate)
+bool MB500::setProcessingRate(int rate)
 {
     stringstream aux;
     aux << rate;
@@ -220,7 +220,7 @@ bool DGPS::setProcessingRate(int rate)
     return false;
 }
 
-void DGPS::dumpStatus()
+void MB500::dumpStatus()
 {
     write("$PASHQ,PAR\r\n", 1000);
 
@@ -235,7 +235,7 @@ void DGPS::dumpStatus()
 	    cout << string(buffer, rd);
     }
 }
-void DGPS::dumpAlmanac()
+void MB500::dumpAlmanac()
 {
     write("$PASHQ,ALM\r\n", 1000);
     while(true)
@@ -248,7 +248,7 @@ void DGPS::dumpAlmanac()
     }
 }
 
-void DGPS::dumpSatellites()
+void MB500::dumpSatellites()
 {
     write("$PASHQ,GSV\r\n", 1000);
     try
@@ -259,7 +259,7 @@ void DGPS::dumpSatellites()
     } catch(std::runtime_error) {}
 }
 
-void DGPS::writeCorrectionData(char const* data, size_t size, int timeout)
+void MB500::writeCorrectionData(char const* data, size_t size, int timeout)
 {
     try {
         IODriver::writePacket(reinterpret_cast <uint8_t const*>(data), size, timeout);
@@ -268,7 +268,7 @@ void DGPS::writeCorrectionData(char const* data, size_t size, int timeout)
     { throw std::runtime_error("dgps/mb500: error writing correction data"); }
 }
 
-void DGPS::write(const string& command, int timeout)
+void MB500::write(const string& command, int timeout)
 {
     size_t cmd_size = command.length();
     try {
@@ -279,7 +279,7 @@ void DGPS::write(const string& command, int timeout)
 }
 
 
-int DGPS::extractPacket(uint8_t const* buffer, size_t buffer_size) const {
+int MB500::extractPacket(uint8_t const* buffer, size_t buffer_size) const {
     if(buffer[0] == '$')
     {
         for(size_t i = 1; i < buffer_size; ++i)
@@ -315,7 +315,7 @@ int DGPS::extractPacket(uint8_t const* buffer, size_t buffer_size) const {
     return -buffer_size;
 }
 
-bool DGPS::setFastRTK(bool setting)
+bool MB500::setFastRTK(bool setting)
 {
     if(setting) write("$PASHS,CPD,FST,ON\r\n", 1000);
     else write("$PASHS,CPD,FST,OFF\r\n", 1000);
@@ -347,7 +347,7 @@ int setRTKBaseATOM(std::ostream& io, string const& port_name)
     return 4;
 }
 
-bool DGPS::setRTKBase(string port_name)
+bool MB500::setRTKBase(string port_name)
 {
     stringstream aux;
     int count = setRTKBaseRTCM3(aux, port_name);
@@ -360,7 +360,7 @@ bool DGPS::setRTKBase(string port_name)
     return true;
 }
 
-void DGPS::stopRTKBase()
+void MB500::stopRTKBase()
 {
     write("$PASHS,RT2,ALL,A,OFF\r\n", 1000);
     verifyAcknowledge("RT2,A,OFF");
@@ -376,13 +376,13 @@ void DGPS::stopRTKBase()
     verifyAcknowledge("RT2,C,OFF");
 }
 
-bool DGPS::setRTKReset()
+bool MB500::setRTKReset()
 {
     write("$PASHS,CPD,RST\r\n", 1000);
     return verifyAcknowledge("RTK RESET");
 }
 
-bool DGPS::setCodeCorrelatorMode(CORRELATOR_MODE mode)
+bool MB500::setCodeCorrelatorMode(CORRELATOR_MODE mode)
 {
     char setting;
     if (mode == EDGE_CORRELATOR)
@@ -394,7 +394,7 @@ bool DGPS::setCodeCorrelatorMode(CORRELATOR_MODE mode)
     return verifyAcknowledge("CODE CORRELATOR " + setting);
 }
 
-bool DGPS::setReceiverDynamics(DYNAMICS_MODEL setting)
+bool MB500::setReceiverDynamics(DYNAMICS_MODEL setting)
 {
     stringstream aux;
     aux << setting;
@@ -402,13 +402,13 @@ bool DGPS::setReceiverDynamics(DYNAMICS_MODEL setting)
     return verifyAcknowledge("RECEIVER DYNAMICS " + setting);
 }
 
-bool DGPS::resetStoredPosition()
+bool MB500::resetStoredPosition()
 {
     write("$PASHS,POS,MOV\r\n", 1000);
     return verifyAcknowledge("RESET STORED POSITION");
 }
 
-bool DGPS::setPositionFromCurrent()
+bool MB500::setPositionFromCurrent()
 {
     write("$PASHS,POS,CUR\r\n", 1000);
     return verifyAcknowledge("SET POSITION FROM CURRENT");
@@ -421,7 +421,7 @@ static double deg2magellan(double value)
     return deg * 100 + decimal * 60;
 }
 
-bool DGPS::setPosition(double latitude, double longitude, double height)
+bool MB500::setPosition(double latitude, double longitude, double height)
 {
     stringstream aux;
     aux << "$PASHS,POS,"
@@ -433,7 +433,7 @@ bool DGPS::setPosition(double latitude, double longitude, double height)
     return verifyAcknowledge("SET CURRENT POSITION");
 }
 
-bool DGPS::setKnownPointInit(double latitude, string NorS, double longitude, string EorW, double height, double accLat, double accLon, double accAlt, string posAttribute)
+bool MB500::setKnownPointInit(double latitude, string NorS, double longitude, string EorW, double height, double accLat, double accLon, double accAlt, string posAttribute)
 {
     stringstream aux;
     aux << latitude << "," << NorS << "," << longitude << "," << EorW << "," << height << "," << accLat << "," << accLon << "," << accAlt << "," << posAttribute;
@@ -441,27 +441,27 @@ bool DGPS::setKnownPointInit(double latitude, string NorS, double longitude, str
     return verifyAcknowledge("SET INITIAL POSITION");
 }
 
-bool DGPS::setGNSSMode(gps::GNSS_MODE mode)
+bool MB500::setGNSSMode(gps::GNSS_MODE mode)
 {
     write("$PASHS,GNS,CFG," + boost::lexical_cast<string>(mode) + "\r\n", 1000);
     return verifyAcknowledge("SET GNSS MODE");
 }
 
-bool DGPS::setGLONASSTracking(bool setting)
+bool MB500::setGLONASSTracking(bool setting)
 {
     if(setting) write("$PASHS,GLO,ON\r\n",1000);
     else write("$PASHS,GLO,OFF\r\n", 1000);
     return verifyAcknowledge("SET GLONASS TRACKING");
 }
 
-bool DGPS::setSBASTracking(bool setting)
+bool MB500::setSBASTracking(bool setting)
 {
     if(setting) write("$PASHS,SBA,ON\r\n",1000);
     else write("$PASHS,SBA,OFF\r\n", 1000);
     return verifyAcknowledge("SET SBAS TRACKING");
 }
 
-bool DGPS::setCodeMeasurementSmoothing(int d1, int d2, int d3)
+bool MB500::setCodeMeasurementSmoothing(int d1, int d2, int d3)
 {
     stringstream aux;
     if(d1 >= 0 && d1 <= 100) {
@@ -498,7 +498,7 @@ bool DGPS::setCodeMeasurementSmoothing(int d1, int d2, int d3)
     return verifyAcknowledge("CODE SMOOTHING");
 }
 
-bool DGPS::setNMEA(string command, string port, bool onOff, double outputRate)
+bool MB500::setNMEA(string command, string port, bool onOff, double outputRate)
 {
     stringstream aux;
 
@@ -518,7 +518,7 @@ bool DGPS::setNMEA(string command, string port, bool onOff, double outputRate)
     return verifyAcknowledge("NMEA OUTPUT " + command + " " + (onOff ? "ON" : "OFF") + " " + rate);
 }
 
-bool DGPS::setFixThreshold(AMBIGUITY_THRESHOLD threshold)
+bool MB500::setFixThreshold(AMBIGUITY_THRESHOLD threshold)
 {
     std::string value;
     switch(threshold)
@@ -532,7 +532,7 @@ bool DGPS::setFixThreshold(AMBIGUITY_THRESHOLD threshold)
     return verifyAcknowledge("FIX THRESHOLD " + value);
 }
 
-bool DGPS::setPeriodicData(std::string const& port, double period)
+bool MB500::setPeriodicData(std::string const& port, double period)
 {
     m_period = period * 1000;
 
@@ -549,7 +549,7 @@ bool DGPS::setPeriodicData(std::string const& port, double period)
     return 1;
 }
 
-bool DGPS::enableNtpdShm(int unit) {
+bool MB500::enableNtpdShm(int unit) {
     key_t k = 0x4e545030+unit; //"NTP0"-"NTP3"
     ntp_shmid = shmget(k,sizeof(struct shmTime),0);
     if (ntp_shmid >= 0) {
@@ -565,7 +565,7 @@ bool DGPS::enableNtpdShm(int unit) {
     return false;
 }
 
-void DGPS::updateNtpdShm()
+void MB500::updateNtpdShm()
 {
     if (!ntp_shm)
 	return;
@@ -588,7 +588,7 @@ void DGPS::updateNtpdShm()
     st->valid = 1;
 }
 
-void DGPS::collectPeriodicData()
+void MB500::collectPeriodicData()
 {
     string message;
     try { message = read(100); }
@@ -625,7 +625,7 @@ void DGPS::collectPeriodicData()
     }
 }
 
-bool DGPS::setNMEALL(string port, bool onOff)
+bool MB500::setNMEALL(string port, bool onOff)
 {
     stringstream aux;
     if (onOff) aux << port <<",ON";
@@ -634,7 +634,7 @@ bool DGPS::setNMEALL(string port, bool onOff)
     return verifyAcknowledge("NMEA ALL");
 }
 
-bool DGPS::verifyAcknowledge(std::string const& cmd)
+bool MB500::verifyAcknowledge(std::string const& cmd)
 {
     string message;
     do { message = read(m_acq_timeout); }
@@ -649,7 +649,7 @@ bool DGPS::verifyAcknowledge(std::string const& cmd)
 }
 
 
-Errors DGPS::getGST(string port)
+Errors MB500::getGST(string port)
 {
     if (port!= "") port = "," + port;
     write("$PASHQ,GST" + port + "\r\n", 1000);
@@ -662,7 +662,7 @@ Errors DGPS::getGST(string port)
     return interpretErrors(result);
 }
 
-Position DGPS::getGGA(string port)
+Position MB500::getGGA(string port)
 {
     string result;
     if (port!= "") port = "," + port;
@@ -677,7 +677,7 @@ Position DGPS::getGGA(string port)
     return interpretInfo(result);
 }
 
-SatelliteInfo DGPS::getGSV(string port)
+SatelliteInfo MB500::getGSV(string port)
 {
     string msg;
     if (port!= "") port = "," + port;
@@ -699,7 +699,7 @@ SatelliteInfo DGPS::getGSV(string port)
     }
 }
 
-pair<base::Time, base::Time> DGPS::interpretDateTime(string const& message)
+pair<base::Time, base::Time> MB500::interpretDateTime(string const& message)
 {
     base::Time cpu_time = base::Time::now();
 
@@ -713,7 +713,7 @@ pair<base::Time, base::Time> DGPS::interpretDateTime(string const& message)
     return make_pair(cpu_time, utc);
 }
 
-bool DGPS::interpretQuality(string const& message)
+bool MB500::interpretQuality(string const& message)
 {
     if( message.find("$GPGSA,") != 0 && message.find("$GLGSA,") != 0 && message.find("$GNGSA,") != 0)
         throw std::runtime_error("wrong message given to interpretErrors");
@@ -750,7 +750,7 @@ bool DGPS::interpretQuality(string const& message)
     return ret;
 }
 
-Errors DGPS::interpretErrors(string const& message)
+Errors MB500::interpretErrors(string const& message)
 {
     if( message.find("$GPGST,") != 0 && message.find("$GLGST,") != 0 && message.find("$GNGST,") != 0)
         throw std::runtime_error("wrong message given to interpretErrors");
@@ -766,7 +766,7 @@ Errors DGPS::interpretErrors(string const& message)
     return data;
 }
 
-bool DGPS::interpretSatelliteInfo(SatelliteInfo& data, string const& message)
+bool MB500::interpretSatelliteInfo(SatelliteInfo& data, string const& message)
 {
     if( message.find("$GPGSV,") != 0 && message.find("$GLGSV,") != 0)
         throw std::runtime_error("wrong message given to interpretSatelliteInfo");
@@ -805,7 +805,7 @@ bool DGPS::interpretSatelliteInfo(SatelliteInfo& data, string const& message)
     return (msg_number == msg_count && message.find("$GLGSV") == 0);
 }
 
-Position DGPS::interpretInfo(string const& message)
+Position MB500::interpretInfo(string const& message)
 {
     if( !message.find("$GPGGA,") == 0)
         throw std::runtime_error("invalid message in interpretInfo");
@@ -830,7 +830,7 @@ Position DGPS::interpretInfo(string const& message)
     return data;
 }
 
-double DGPS::interpretLatency(std::string const& message)
+double MB500::interpretLatency(std::string const& message)
 {
     if( !message.find("$PASHR,LTN,") == 0)
         throw std::runtime_error("invalid message in interpretInfo");
@@ -840,7 +840,7 @@ double DGPS::interpretLatency(std::string const& message)
     return lexical_cast<double>(fields[2]) / 1000;
 }
 
-double DGPS::interpretAngle(std::string const& value, bool positive)
+double MB500::interpretAngle(std::string const& value, bool positive)
 {
     double angle = atof(value.c_str());
     double minutes = fmod(angle, 100);
@@ -850,7 +850,7 @@ double DGPS::interpretAngle(std::string const& value, bool positive)
     return angle;
 }
 
-base::Time DGPS::interpretTime(std::string const& time)
+base::Time MB500::interpretTime(std::string const& time)
 {
     float gps_time   = atof(time.c_str());
     int integer_part = gps_time;
@@ -883,18 +883,18 @@ char const* solutionNames[] = {
 static const int MAX_SOLUTION_ID = 5;
 
 
-std::ostream& DGPS::display(std::ostream& io, DGPS const& driver)
+std::ostream& MB500::display(std::ostream& io, MB500 const& driver)
 {
     return display(io, driver.position, driver.errors, driver.satellites, driver.solutionQuality);
 }
 
-std::ostream& DGPS::displayHeader(std::ostream& io)
+std::ostream& MB500::displayHeader(std::ostream& io)
 {
     cout << "Time                          | Latitude      Longitude         Alt (MSL+geoid)  | dLat   dLong  dAlt | Mode           PDOP    Used (Sum,GP/S/GL)   Tracked (Sum,GP/S/GL) | DiffAge" << std::endl;
     return io;
 }
 
-std::ostream& DGPS::display(std::ostream& io,
+std::ostream& MB500::display(std::ostream& io,
 	gps::Position const& pos, gps::Errors const& errors,
 	gps::SatelliteInfo const& satellites,
 	gps::SolutionQuality const& quality)

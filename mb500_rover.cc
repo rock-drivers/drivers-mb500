@@ -1,4 +1,4 @@
-#include "dgps.hh"
+#include "mb500.hh"
 #include <iostream>
 #include <sys/time.h>
 #include <time.h>
@@ -74,7 +74,7 @@ void usage()
 }
 
 int main (int argc, const char** argv){
-    DGPS gps;
+    gps::MB500 gps;
 
     if (argc != 4)
     {
@@ -124,8 +124,8 @@ int main (int argc, const char** argv){
         return 1;
     }
     gps.setPeriodicData(port_name, 1);
-    cout << "DGPS board initialized" << endl;
-    DGPS::displayHeader(cout);
+    cout << "gps::MB500 board initialized" << endl;
+    gps::MB500::displayHeader(cout);
 
     base::Time last_update;
 
@@ -171,7 +171,7 @@ int main (int argc, const char** argv){
                     ++seq;
                     last_update = gps.position.time;
                     cout << seq << " ";
-                    DGPS::display(cout, gps) << " " << diff_count << endl;
+                    gps::MB500::display(cout, gps) << " " << diff_count << endl;
                     diff_count = 0;
                 }
             }
