@@ -7,7 +7,9 @@
 #include <sys/types.h>
 #include <iodrivers_base.hh>
 #include <vector>
-#include "dgpstypes.hh"
+
+#include "gps_types.hh"
+#include "mb500_types.hh"
 
 namespace gps {
     /** Driver for the MB500 Magellan differential GPS */
@@ -62,7 +64,7 @@ namespace gps {
         void dumpSatellites();
 
         /** Select the type of receiver motion */
-        bool setReceiverDynamics(gps::DYNAMICS_MODEL mode);
+        bool setReceiverDynamics(MB500_DYNAMICS_MODEL mode);
 
         /** Sets the board's user dynamics parameters. You must call
          * setReceiverDynamics(USER_DEFINED) explicitely afterwards to
@@ -88,7 +90,7 @@ namespace gps {
         /** Set the ambiguity threshold above which the RTK engine will
          * switch to FIX
          */
-        bool setFixThreshold(gps::AMBIGUITY_THRESHOLD threshold);
+        bool setFixThreshold(MB500_AMBIGUITY_THRESHOLD threshold);
 
         void disableAllOutputs();
 
@@ -97,7 +99,7 @@ namespace gps {
         /** Enable/disable SBAS tracking */
         bool setSBASTracking(bool);
         /** Sets the acquisition mode */
-        bool setGNSSMode(gps::GNSS_MODE mode);
+        bool setGNSSMode(MB500_GNSS_MODE mode);
 
         enum Special {
             NONE = -1

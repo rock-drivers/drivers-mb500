@@ -1,5 +1,5 @@
-#ifndef DGPS_TYPES_H
-#define DGPS_TYPES_H
+#ifndef GPS_TYPES_H
+#define GPS_TYPES_H
 
 #ifndef __orogen
 #include <vector>
@@ -11,6 +11,7 @@ namespace gps {
     enum GPS_SOLUTION_TYPES
     {
         NO_SOLUTION  = 0,
+        AUTONOMOUS_2D  = 6, // is 6 for historical reasons
         AUTONOMOUS   = 1,
         DIFFERENTIAL = 2,
         INVALID      = 3,
@@ -18,51 +19,6 @@ namespace gps {
         RTK_FLOAT    = 5
     };
 
-    enum FIRMWARE_OPTIONS
-    {
-        UPDATE_RATE        = 1,
-        RTK_ROVER          = 2,
-        RTK_BASE           = 4,
-        PPS_OUTPUT         = 8,
-        EVENT_MARKER       = 16,
-        SBAS_TRACKING      = 32,
-        GLONASS_TRACKING   = 64,
-        RTK_MOVING_BASE    = 128,
-        HEADING            = 256,
-        ADVANCED_MULTIPATH = 512
-    };
-
-    enum DYNAMICS_MODEL
-    {
-        STATIC       = 1,
-        QUASI_STATIC = 2,
-        WALKING      = 3,
-        SHIP         = 4,
-        AUTOMOBILE   = 5,
-        AIRCRAFT     = 6,
-        UNLIMITED    = 7,
-        ADAPTIVE     = 8,
-        USER_DEFINED = 9
-    };
-
-    enum AMBIGUITY_THRESHOLD
-    {
-        NO_FIX     = 0,
-        FIX_95_0 = 1,
-        FIX_99_0 = 2,
-        FIX_99_9 = 3
-    };
-
-    enum GNSS_MODE
-    {
-        GP_L1   = 0,
-        GPGL_L1 = 1,
-        GP_L2   = 2,
-        GP_L2CS = 3,
-        GPGL_L1L2 = 4,
-        GPGL_L1L2CS = 5
-    };
-    
     struct Time { 
       base::Time cpu_time; 
       base::Time gps_time; 
@@ -151,6 +107,23 @@ namespace gps {
         base::Time time;
         std::vector < gps::Satellite> knownSatellites;
     };
+
+    struct UserDynamics {
+        int hSpeed;
+        int hAccel;
+        int vSpeed;
+        int vAccel;
+#ifndef __orogen
+        UserDynamics()
+            : hSpeed(0), hAccel(0), vSpeed(0), vAccel(0) {}
+#endif
+    };
+
+    struct ConstellationInfo {
+        gps::SolutionQuality quality;
+        gps::SatelliteInfo  satellites;
+    };
 }
 
 #endif
+

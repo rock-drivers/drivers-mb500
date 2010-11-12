@@ -53,17 +53,17 @@ int main(int argc, char** argv)
     else if (command == "fixed")
     {
         gps.setPositionFromCurrent();
-        gps.setReceiverDynamics(gps::STATIC);
+        gps.setReceiverDynamics(gps::MB500_STATIC);
     }
     else if (command == "static")
     {
         gps.resetStoredPosition();
-        gps.setReceiverDynamics(gps::STATIC);
+        gps.setReceiverDynamics(gps::MB500_STATIC);
     }
     else if (command == "moving")
     {
         gps.resetStoredPosition();
-        gps.setReceiverDynamics(gps::ADAPTIVE);
+        gps.setReceiverDynamics(gps::MB500_ADAPTIVE);
     }
     else if (command == "period")
     {

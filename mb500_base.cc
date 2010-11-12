@@ -100,7 +100,7 @@ int main (int argc, const char** argv){
     if(!gps.openBase(device_name))
         return 1;
 
-    if (!gps.setReceiverDynamics(gps::STATIC))
+    if (!gps.setReceiverDynamics(gps::MB500_STATIC))
     {
         cerr << "could not set the receiver dynamics" << endl;
         return 1;

@@ -3,9 +3,9 @@ exec_prefix=@CMAKE_INSTALL_PREFIX@
 libdir=${prefix}/lib
 includedir=${prefix}/include
 
-Name: dgps
-Description: Driver for the dGPS
+Name: mb500
+Description: Driver for the MB500 dGPS board from Magellan
 Version: @PROJECT_VERSION@
-Libs: -L${libdir} -ldgps
+Libs: -L${libdir} -lmb500
 Cflags: -I${includedir}
 

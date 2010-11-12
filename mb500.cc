@@ -102,7 +102,7 @@ bool MB500::openBase(std::string const& device_name)
     if (!open(device_name))
         return false;
 
-    return setReceiverDynamics(STATIC);
+    return setReceiverDynamics(MB500_STATIC);
 }
 
 void MB500::disableAllOutputs()
@@ -150,7 +150,7 @@ bool MB500::openRover(std::string const& device_name)
     if (!open(device_name))
         return false;
 
-    return setReceiverDynamics(ADAPTIVE);
+    return setReceiverDynamics(MB500_ADAPTIVE);
 }
 
 bool MB500::setUserDynamics(int h_vel, int h_acc, int v_vec, int v_acc)
@@ -394,7 +394,7 @@ bool MB500::setCodeCorrelatorMode(CORRELATOR_MODE mode)
     return verifyAcknowledge("CODE CORRELATOR " + setting);
 }
 
-bool MB500::setReceiverDynamics(DYNAMICS_MODEL setting)
+bool MB500::setReceiverDynamics(MB500_DYNAMICS_MODEL setting)
 {
     stringstream aux;
     aux << setting;
@@ -441,7 +441,7 @@ bool MB500::setKnownPointInit(double latitude, string NorS, double longitude, st
     return verifyAcknowledge("SET INITIAL POSITION");
 }
 
-bool MB500::setGNSSMode(gps::GNSS_MODE mode)
+bool MB500::setGNSSMode(MB500_GNSS_MODE mode)
 {
     write("$PASHS,GNS,CFG," + boost::lexical_cast<string>(mode) + "\r\n", 1000);
     return verifyAcknowledge("SET GNSS MODE");
@@ -518,15 +518,15 @@ bool MB500::setNMEA(string command, string port, bool onOff, double outputRate)
     return verifyAcknowledge("NMEA OUTPUT " + command + " " + (onOff ? "ON" : "OFF") + " " + rate);
 }
 
-bool MB500::setFixThreshold(AMBIGUITY_THRESHOLD threshold)
+bool MB500::setFixThreshold(MB500_AMBIGUITY_THRESHOLD threshold)
 {
     std::string value;
     switch(threshold)
     {
-        case NO_FIX: value = "0"; break;
-        case FIX_95_0: value = "95.0"; break;
-        case FIX_99_0: value = "99.0"; break;
-        case FIX_99_9: value = "99.9"; break;
+        case MB500_NO_FIX: value = "0"; break;
+        case MB500_FIX_95_0: value = "95.0"; break;
+        case MB500_FIX_99_0: value = "99.0"; break;
+        case MB500_FIX_99_9: value = "99.9"; break;
     };
     write("$PASHS,CPD,AFP," + value + "\r\n", 1000);
     return verifyAcknowledge("FIX THRESHOLD " + value);
@@ -819,9 +819,16 @@ Position MB500::interpretInfo(string const& message)
     data.latitude  = interpretAngle(fields[2], fields[3] == "N");
     data.longitude = interpretAngle(fields[4], fields[5] == "E");
     int position_type = atoi(fields[6].c_str());
-    if (position_type < 0 || position_type > 5)
-        position_type = INVALID;
-    data.positionType = static_cast<GPS_SOLUTION_TYPES>(position_type);
+    switch(position_type)
+    {
+        case 0: data.positionType = NO_SOLUTION; break;
+        case 1: data.positionType = AUTONOMOUS; break;
+        case 2: data.positionType = DIFFERENTIAL; break;
+        case 3: data.positionType = INVALID; break;
+        case 4: data.positionType = RTK_FIXED; break;
+        case 5: data.positionType = RTK_FLOAT; break;
+        default: data.positionType = INVALID; break;
+    };
 
     data.noOfSatellites = atoi(fields[7].c_str());
     data.altitude       = atof(fields[9].c_str());

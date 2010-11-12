@@ -44,7 +44,7 @@ TARGET_LINK_LIBRARIES(mb500_test mb500)
 INSTALL(TARGETS mb500 #mb500_acq
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib)
-INSTALL(FILES mb500.hh mb500types.hh DESTINATION include)
+INSTALL(FILES mb500.hh gps_types.hh mb500_types.hh DESTINATION include)
 
 CONFIGURE_FILE(Doxyfile.in Doxyfile @ONLY)
 ADD_CUSTOM_TARGET(doc doxygen Doxyfile)
