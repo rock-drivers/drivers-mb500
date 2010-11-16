@@ -6,6 +6,7 @@ includedir=${prefix}/include
 Name: mb500
 Description: Driver for the MB500 dGPS board from Magellan
 Version: @PROJECT_VERSION@
+Requires: iodrivers_base
 Libs: -L${libdir} -lmb500
 Cflags: -I${includedir}
 
