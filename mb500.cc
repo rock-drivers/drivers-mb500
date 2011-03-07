@@ -71,18 +71,6 @@ bool MB500::openSerial(std::string const& filename)
         return false;
     }
 
-    int fd = getFileDescriptor();
-
-    // Set up the serial line
-    struct termios tio;
-    memset(&tio, 0, sizeof(tio));
-    tio.c_cflag = CS8; // data bits = 8bit
-    if (tcsetattr(fd,TCSADRAIN,&tio)!=0)
-    {
-        cerr << "dgps/mb500: cannot set serial line properties" << endl;
-        return false;
-    }
-
     disableAllOutputs();
     return true;
 }
