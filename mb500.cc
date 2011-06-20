@@ -625,7 +625,17 @@ bool MB500::setNMEALL(string port, bool onOff)
 bool MB500::verifyAcknowledge(std::string const& cmd)
 {
     string message;
-    do { message = read(m_acq_timeout); }
+
+    base::Time start = base::Time::now();
+    do {
+        if ((base::Time::now() - start).toMilliseconds() > m_acq_timeout)
+        {
+            cerr << "dpgs/mb500: command " << cmd << " timed out waiting for acknowledgement" << endl;
+            return false;
+        }
+
+        message = read(m_acq_timeout);
+    }
     while( message.find("$PASHR,NAK") != 0 && message.find("$PASHR,ACK") != 0);
 
     if( message.find("$PASHR,NAK") == 0) {
