@@ -23,7 +23,7 @@ namespace gps {
         bool openBase(const std::string& device_name);
         bool openRover(const std::string& device_name);
 
-        bool close();
+        void close();
 
         /** Make the base output RTCM 3.0 correction messages on the provided port */
         bool setRTKBase(std::string port_name);

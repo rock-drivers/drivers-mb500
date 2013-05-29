@@ -170,10 +170,9 @@ bool MB500::stopPeriodicData()
     return true;
 }
 
-bool MB500::close()
+void MB500::close()
 {
     IODriver::close();
-    return true;
 }
 
 bool MB500::setRTKInputPort(string const& port_name)
