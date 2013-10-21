@@ -88,13 +88,13 @@ int main (int argc, const char** argv){
 
     int correction_socket = -1;
     string correction_input_port;
-    std::auto_ptr<file_guard> guard_socket;
+    std::auto_ptr<iodrivers_base::FileGuard> guard_socket;
 
     if (correction_source.size() != 1 || correction_source.find_first_of("ABC") != 0)
     {
         cerr << "reading correction data from UDP port " << correction_source << endl;
         correction_socket = openSocket(correction_source);
-        guard_socket.reset(new file_guard(correction_socket));
+        guard_socket.reset(new iodrivers_base::FileGuard(correction_socket));
         correction_input_port = port_name;
     }
     else
@@ -175,7 +175,7 @@ int main (int argc, const char** argv){
                     diff_count = 0;
                 }
             }
-            catch(timeout_error) {}
+            catch(iodrivers_base::TimeoutError) {}
         }
     }
     gps.close();

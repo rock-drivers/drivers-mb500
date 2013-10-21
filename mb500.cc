@@ -52,7 +52,7 @@ struct shmTime {
   int    dummy[10];
 };
 
-MB500::MB500() : IODriver(2048), processing_latency(0)
+MB500::MB500() : iodrivers_base::Driver(2048), processing_latency(0)
 	     , m_period(1000), m_acq_timeout(2000), ntp_shm(NULL)
 {
 }
@@ -65,7 +65,7 @@ MB500::~MB500()
 
 bool MB500::openSerial(std::string const& filename)
 {
-    if( !IODriver::openSerial(filename, 115200))
+    if( !iodrivers_base::Driver::openSerial(filename, 115200))
     {
         cerr << "dgps/mb500: cannot open " << filename << " at 115200 bauds" << endl;
         return false;
@@ -112,7 +112,7 @@ bool MB500::waitForBoardReset()
             m_acq_timeout = old_acq;
             return true;
         }
-        catch(timeout_error) {}
+        catch(iodrivers_base::TimeoutError) {}
     }
     m_acq_timeout = old_acq;
     return false;
@@ -172,7 +172,7 @@ bool MB500::stopPeriodicData()
 
 void MB500::close()
 {
-    IODriver::close();
+    iodrivers_base::Driver::close();
 }
 
 bool MB500::setRTKInputPort(string const& port_name)
@@ -249,7 +249,7 @@ void MB500::dumpSatellites()
 void MB500::writeCorrectionData(char const* data, size_t size, int timeout)
 {
     try {
-        IODriver::writePacket(reinterpret_cast <uint8_t const*>(data), size, timeout);
+        iodrivers_base::Driver::writePacket(reinterpret_cast <uint8_t const*>(data), size, timeout);
     }
     catch(...)
     { throw std::runtime_error("dgps/mb500: error writing correction data"); }
@@ -259,7 +259,7 @@ void MB500::write(const string& command, int timeout)
 {
     size_t cmd_size = command.length();
     try {
-        IODriver::writePacket(reinterpret_cast <uint8_t const*>(command.c_str()), cmd_size, timeout);
+        iodrivers_base::Driver::writePacket(reinterpret_cast <uint8_t const*>(command.c_str()), cmd_size, timeout);
     }
     catch(...)
     { throw std::runtime_error("dgps/mb500: error sending command"); }
@@ -579,7 +579,7 @@ void MB500::collectPeriodicData()
 {
     string message;
     try { message = read(100); }
-    catch(timeout_error)
+    catch(iodrivers_base::TimeoutError)
     { return; }
 
     if( message.find("$GPZDA,") == 0 )

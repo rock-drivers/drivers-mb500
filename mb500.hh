@@ -5,7 +5,7 @@
 #include <string>
 #include <iosfwd>
 #include <sys/types.h>
-#include <iodrivers_base.hh>
+#include <iodrivers_base/Driver.hpp>
 #include <vector>
 
 #include "gps_types.hh"
@@ -13,7 +13,7 @@
 
 namespace gps {
     /** Driver for the MB500 Magellan differential GPS */
-    class MB500 : public IODriver {
+    class MB500 : public iodrivers_base::Driver {
     public:
         MB500();
         ~MB500();

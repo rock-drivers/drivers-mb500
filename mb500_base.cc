@@ -82,7 +82,7 @@ int main (int argc, const char** argv){
     else if (stat(target_host.c_str(), &file_stat) != -1)
     {
 	string target_port     = argv[4];
-        diff_io = IODriver::openSerialIO(target_host, boost::lexical_cast<int>(target_port));
+        diff_io = iodrivers_base::Driver::openSerialIO(target_host, boost::lexical_cast<int>(target_port));
         cerr << "outputting correction data to serial port " << target_host << ", baud rate is " << target_port << endl;
     }
     else
@@ -180,7 +180,6 @@ int main (int argc, const char** argv){
     char buffer[1024];
 
     last_update = base::Time::now();
-    base::Time start = base::Time::now();
     int bytes_tx = 0;
     while(true)
     {

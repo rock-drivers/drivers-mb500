@@ -38,7 +38,7 @@ int main (int argc, const char** argv){
 
 		}
 	} 
-        catch(timeout_error) {}
+        catch(iodrivers_base::TimeoutError) {}
     }
     gps.close();
 
