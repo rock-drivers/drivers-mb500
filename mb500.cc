@@ -9,7 +9,9 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <termio.h>
+#ifndef __APPLE__
+    #include <termio.h>
+#endif
 #include <sys/types.h>
 #include <sys/time.h>
 #include <time.h>
