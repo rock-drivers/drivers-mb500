@@ -5,7 +5,7 @@
 #include <vector>
 #endif
 
-#include <base/time.h>
+#include <base/Time.hpp>
 
 namespace gps {
     enum GPS_SOLUTION_TYPES
