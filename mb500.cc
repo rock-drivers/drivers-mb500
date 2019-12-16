@@ -29,6 +29,7 @@
 
 using namespace std;
 using namespace gps;
+using namespace gps_base;
 using namespace boost;
 
 /* struct used in communication with the ntpd */

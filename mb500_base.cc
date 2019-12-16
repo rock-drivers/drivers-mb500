@@ -16,6 +16,7 @@
 #include <fcntl.h>
 
 using namespace std;
+using namespace gps_base;
 
 int openSocket(std::string const& hostname, std::string const& port)
 {
@@ -145,7 +146,7 @@ int main (int argc, const char** argv){
 	    gps.collectPeriodicData();
 	    if (gps.position.time == gps.errors.time && (gps.position.time > last_update || last_update == base::Time()))
 	    {
-		if (gps.position.positionType != gps::NO_SOLUTION && gps.position.positionType != gps::INVALID)
+		if (gps.position.positionType != NO_SOLUTION && gps.position.positionType != INVALID)
 		{
 		    if (first_solution.isNull())
 		    {
